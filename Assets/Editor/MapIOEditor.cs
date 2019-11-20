@@ -900,6 +900,65 @@ public class MapIOEditor : EditorWindow
 						
                 case 2:
 			
+			if (GUILayout.Button("Switchyard Arena"))
+			{
+				ArenaHeightmap();
+				ArenaTextures();
+				WaterworldTopologies();
+				WaterworldFinalizing();				
+				
+			}
+			
+			if (GUILayout.Button("Highway Arena"))
+			{
+				HighwayHeightmap();
+				HighwayTextures();
+				WaterworldTopologies();
+				WaterworldFinalizing();				
+				
+			}
+			
+			if (GUILayout.Button("Forested Arena"))
+			{
+				ArenaHeightmap();
+				ForestTextures();
+				WaterworldTopologies();
+				WaterworldFinalizing();				
+				
+			}
+			
+			if (GUILayout.Button("Rapa Nui Arena"))
+			{
+				WaterArenaHeightmap();
+				ArenaTextures();
+				WaterworldTopologies();
+				WaterworldFinalizing();				
+				
+			}
+			
+			if (GUILayout.Button("Atoll heightmaps"))
+			{
+				WaterworldClassicHeightmap();
+				
+			}
+			
+			
+			
+			if (GUILayout.Button("Atoll textures monuments etc"))
+			{
+				WaterworldTextures();
+
+				
+
+				WaterworldClassicMonuments();
+				
+				WaterworldTopologies();	
+				
+				WaterworldFinalizing();
+				//WaterworldCliffs();
+				
+			}
+			
 			if (GUILayout.Button("Small Island Map"))
 			{
 				WaterworldHeightmap();
@@ -913,18 +972,17 @@ public class MapIOEditor : EditorWindow
 				WaterworldCliffs();
 			}
 			
-			if (GUILayout.Button("RandomMonument tester"))
+						
+			
+			
+			if (GUILayout.Button("Small Island Map Topos"))
 			{
-				newWaterworldMonuments();
-				
+
+				WaterworldTopologies();
+				WaterworldFinalizing();
 			}
 			
-			if (GUILayout.Button("Small Island Map Terrains"))
-			{
-				WaterworldHeightmap();
-				WaterworldTextures();
-				WaterworldTopologies();
-			}
+
 
 			if (GUILayout.Button("Small Island Monuments"))
 			{
@@ -936,6 +994,12 @@ public class MapIOEditor : EditorWindow
 				WaterworldTopologies();
 				WaterworldFinalizing();
 				WaterworldCliffs();
+			}
+			
+			if (GUILayout.Button("Small Islands textures + topos"))
+			{
+				WaterworldTextures();
+				WaterworldTopologies();
 			}
 		
 		if (GUILayout.Button("Cliffs Heightmap"))
@@ -1023,9 +1087,9 @@ public class MapIOEditor : EditorWindow
 			float ratio = land.terrainData.size.x / (land.terrainData.heightmapWidth-1);
 			Debug.LogError (ratio);
 			
-			string fileA = "monuments/3500/SwampAreplacer.monument.map";
-			string fileB = "monuments/3500/SwampBreplacer.monument.map";
-			string fileC = "monuments/3500/SwampCreplacer.monument.map";
+			string fileA = "monuments/3300/SwampReplacerA.monument.map";
+			string fileB = "monuments/3300/SwampReplacerB.monument.map";
+			string fileC = "monuments/3300/SwampReplacerC.monument.map";
 			int x5 = 0;
 			int y5 = 0;
 			float z5 = 0f;
@@ -1351,6 +1415,417 @@ public class MapIOEditor : EditorWindow
 			
 		}
 
+		void ArenaHeightmap()
+		{
+			MapIO.NewEmptyTerrain(2000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3, 50, 120);
+			
+			
+			MapIO.diamondSquareNoise(20, 20, 20);
+			
+
+			
+			MapIO.pucker(400, 150, .450f, 100, 0, true, 200);
+			//MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.zNudge(1.5f);
+			
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			
+			MapIO.ChangeLandLayer();
+		}
+		
+		
+		void WaterArenaHeightmap()
+		{
+			MapIO.NewEmptyTerrain(2000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3, 50, 100);
+			
+			
+			MapIO.diamondSquareNoise(20, 20, 20);
+			
+
+			
+			MapIO.pucker(400, 150, .450f, 100, 0, true, 200);
+			MapIO.unPucker(300,150, .495f, 300, 100, false, 0);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.zNudge(1.5f);
+			
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			
+			MapIO.ChangeLandLayer();
+		}
+		
+		void HighwayHeightmap()
+		{
+			MapIO.NewEmptyTerrain(2000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3, 50, 250);
+			
+			
+			MapIO.diamondSquareNoise(20, 20, 20);
+			
+
+			
+			MapIO.pucker(400, 150, .450f, 200, 0, true, 400);
+			//MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.zNudge(1.5f);
+			
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			MapIO.SmoothHeightmap(1f, -1f);
+			
+			MapIO.ChangeLandLayer();
+		}
+
+
+		void WaterworldClassicHeightmap()
+		{
+			/*
+						script.flattenWater(.5f);
+			
+			//overly recursive perlin layer averaging madness
+			//           layers, scaling period, initial scale
+			script.perlinSaiyan(5, 20, 67);
+						          
+			//script.diamondSquareNoise(30, 10, 10);
+			script.zNudge(50f);
+			script.pucker(600, 600, .40f, 200, 500, true, 200);
+			
+			script.zNudge(200f);
+
+			script.punch(.480f, 90);
+			
+			//dunes
+			script.bluffTerracing(true, true, true, .9f, 505, 15, 20, 4, 7);
+			//cliffs
+			script.bluffTerracing(true, true, true, .9f, 565, 30, 40, 10, 2);
+			
+			script.punch(.495f, 120);
+			
+			script.pucker(600, 600, .475f, 200, 500, false, 0);
+			
+			script.zNudge(10f);
+			script.unPucker(500,250, .495f, 450, 0, false, 0);
+			//script.unPucker(200,100, .485f, 0, 0, false, 0);
+			
+			script.bluffTerracing(false, true, true, 1f, 497, 10, 10, 1, 0);
+			
+			*/
+			MapIO.NewEmptyTerrain(3000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3, 50, 120);
+			
+			
+			MapIO.diamondSquareNoise(20, 20, 20);
+			
+
+			
+			MapIO.pucker(800, 300, .450f, 0, 0, true, 200);
+			MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.zNudge(1.5f);
+			
+			
+						//awesome I know
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			MapIO.SmoothHeightmap(1f, 0f);
+			
+			
+			
+			
+		}
+
 		void WaterworldTopologies()
 			{
 			
@@ -1580,6 +2055,175 @@ public class MapIOEditor : EditorWindow
 				
 		}
 		
+		void ArenaTextures()
+		{
+			MapIO.landLayer ="biome";
+			MapIO.PaintLayer("Biome", 0);
+            //MapIO.biomeGradients(100,0,0,0);
+			MapIO.landLayer ="ground";
+				//paint Dirt on temperate
+				MapIO.terrainLayer = TerrainSplat.Enum.Dirt;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Temperate;
+            MapIO.paintPerlin(60, 1f, false, true);
+				
+				//paint stones on tundra
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Tundra;
+            MapIO.paintPerlin(30, 1f, false, true);
+				
+				//paint Sand on arid
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arid;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint Forests
+				MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+            //z is number of random zones, a is min size, a1 is max
+            MapIO.paintCrazing(100, 500, 1000);
+            MapIO.paintTerrainOutline(4, .667f);
+				
+				//paint Snow on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(80, 3f, false, true);
+				
+				//paint gravel on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Gravel;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint stones on steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+            MapIO.paintTerrainSlope(35,90);
+				
+				//paint Rock on less steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Rock;
+            MapIO.paintTerrainSlope(38,90);
+				
+				//paint Sand under water
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+            MapIO.paintSplatHeight(0,500);
+            MapIO.paintTerrainOutline(2, .667f);
+
+            //expand beaches a bit
+            MapIO.paintTerrainOutline(2, .66f);
+			
+			
+		}
+		
+		void HighwayTextures()
+		{
+			MapIO.landLayer ="biome";
+			MapIO.PaintLayer("Biome", 1);
+            //MapIO.biomeGradients(100,0,0,0);
+			MapIO.landLayer ="ground";
+				//paint Dirt on temperate
+				MapIO.terrainLayer = TerrainSplat.Enum.Dirt;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Temperate;
+            MapIO.paintPerlin(60, 1f, false, true);
+				
+				//paint stones on tundra
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Tundra;
+            MapIO.paintPerlin(30, 1f, false, true);
+				
+				//paint Sand on arid
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arid;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint Forests
+				MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+            //z is number of random zones, a is min size, a1 is max
+            MapIO.paintCrazing(100, 500, 1000);
+            MapIO.paintTerrainOutline(4, .667f);
+				
+				//paint Snow on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(80, 3f, false, true);
+				
+				//paint gravel on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Gravel;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint stones on steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+            MapIO.paintTerrainSlope(35,90);
+				
+				//paint Rock on less steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Rock;
+            MapIO.paintTerrainSlope(38,90);
+				
+				//paint Sand under water
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+            MapIO.paintSplatHeight(0,500);
+            MapIO.paintTerrainOutline(2, .667f);
+
+            //expand beaches a bit
+            MapIO.paintTerrainOutline(2, .66f);
+			
+			
+		}
+		
+				
+		void ForestTextures()
+		{
+			MapIO.landLayer ="biome";
+			MapIO.PaintLayer("Biome", 1);
+            //MapIO.biomeGradients(100,0,0,0);
+			MapIO.landLayer ="ground";
+				//paint Dirt on temperate
+				MapIO.terrainLayer = TerrainSplat.Enum.Dirt;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Temperate;
+            MapIO.paintPerlin(60, 1f, false, true);
+				
+				//paint stones on tundra
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Tundra;
+            MapIO.paintPerlin(30, 1f, false, true);
+				
+				//paint Sand on arid
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arid;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint Forests
+				MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+            //z is number of random zones, a is min size, a1 is max
+            MapIO.paintCrazing(800, 700, 1000);
+            MapIO.paintTerrainOutline(4, .667f);
+				
+				//paint Snow on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(80, 3f, false, true);
+				
+				//paint gravel on arctic
+				MapIO.terrainLayer = TerrainSplat.Enum.Gravel;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+            MapIO.paintPerlin(40, 1f, false, true);
+				
+				//paint stones on steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+            MapIO.paintTerrainSlope(35,90);
+				
+				//paint Rock on less steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Rock;
+            MapIO.paintTerrainSlope(38,90);
+				
+				//paint Sand under water
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+            MapIO.paintSplatHeight(0,500);
+            MapIO.paintTerrainOutline(2, .667f);
+
+            //expand beaches a bit
+            MapIO.paintTerrainOutline(2, .66f);
+			
+			
+		}
+		
 		void WaterworldTextures()
 		{
 			MapIO.landLayer ="biome";
@@ -1645,6 +2289,75 @@ public class MapIOEditor : EditorWindow
 			//public static void randomMonument(WorldSerialization blob, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax, bool water)
 			blob.Load("Monuments/4096/outpost.monument.map");
             MapIO.randomMonument(blob, 0, 3000, 0, 3000, 400, 1000, true);
+		}
+		
+		void WaterworldClassicMonuments()
+		{
+			MapIO.landLayer = "topology";
+			MapIO.topologyLayer = TerrainTopology.Enum.Monument;
+			MapIO.ChangeLandLayer();
+			
+			var blob = new WorldSerialization();
+			//public static void randomMonument(WorldSerialization blob, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax, bool water)
+			blob.Load("Monuments/3000/ship.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/oilrig.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/sunkenDome.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/artilleryTower.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/artilleryTower.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/seaLand.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/seaLand.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/seaLand.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/texasTower.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/texasTower.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+						
+			blob.Load("Monuments/3000/texasTower.monument.map");
+            MapIO.randomMonument(blob, 1000, 2000, 1000, 2000, 400, 500, true);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 2000, 2500, 0000, 2000, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 2000, 2500, 0000, 2000, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 1000, 2500, 0000, 2000, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 1000, 2500, 0000, 2000, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 0000, 1000, 0000, 2000, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 0000, 1000, 1000, 2500, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 000, 1000, 1000, 2500, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 000, 2000, 1000, 2500, 498, 505, false);
+			
+			blob.Load("Monuments/3000/easterIsland.monument.map");
+            MapIO.randomMonument(blob, 000, 2000, 1000, 2500, 498, 505, false);
 		}
 		
 		void WaterworldMonuments()
@@ -1808,7 +2521,7 @@ public class MapIOEditor : EditorWindow
 			Vector3 rotters = new Vector3(10, 300, 10);
 			var blob = new WorldSerialization();
 			
-			blob.Load("Cliffsets/waterworldCliffset.map");
+			blob.Load("monuments/3000/cliffset.monument.map");
 
             //blob, random rotation ranges, slope lower bound, slope higher bound, cliffset index,  prefab z Offset,
             //cliff density from 0-100, lowest height boundary 0-1000

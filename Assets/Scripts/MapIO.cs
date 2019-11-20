@@ -2101,7 +2101,7 @@ public static class MapIO
     /// </summary>
 	public static void pasteMonument(WorldSerialization blob, int x, int y, float zOffset)
 	{
-		int dim=2000;
+		
 		
 		EditorUtility.DisplayProgressBar("reeeLoading", "Monument File", .75f);
 		//selectedLandLayer = null;
@@ -2124,6 +2124,8 @@ public static class MapIO
 		land.transform.position = terrainPosition;
         float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
 		float ratio = terrains.size.x / (baseMap.GetLength(0));
+		
+		int dim=baseMap.GetLength(0)/2;
 		
 		float x1 = x/2f;
 		float y1 = y/2f;
@@ -2258,7 +2260,7 @@ public static class MapIO
 	
 	public static float testMonument(float[,] pasteMap, float[,,] pBiome, float[,] baseMap, int x, int y, int zMin, int zMax)
 	{
-		int dim=2000;
+		
 		x=x/2;
 		y=y/2;
 		
@@ -2276,6 +2278,7 @@ public static class MapIO
 		
 		float[,,] monumentMap = GetSplatMap("topology", TerrainTopology.TypeToIndex((int)topologyLayer));
 		
+		int dim=monumentMap.GetLength(0) / 2;
 		//find monument dimensions
 		int helk = 0;
 		
@@ -2454,7 +2457,7 @@ public static class MapIO
 	
 	public static float testMonumentHeight(WorldSerialization blob, int x, int y)
 	{
-		int dim=2000;
+		
 		x=x/2;
 		y=y/2;
 		
@@ -2477,7 +2480,7 @@ public static class MapIO
 		//heightmap arrays 
 		float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
 		
-		
+		int dim=baseMap.GetLength(0) / 2;
 		
 		//find monument dimensions
 		//and take a nap or something
@@ -2837,7 +2840,7 @@ public static class MapIO
 	
 	public static void stripPrefabsUnderMonument(WorldSerialization blob, int x, int y)
 	{
-		int dim=2000;
+		
 		
 		
 		
@@ -2864,6 +2867,8 @@ public static class MapIO
 		
 		
 		float ratio = terrains.size.x / (baseMap.GetLength(0));
+		
+		int dim=baseMap.GetLength(0) / 2;
 		
 		x=(int)(x/2f);
 		y=(int)(y/2f);
@@ -3617,6 +3622,91 @@ public static class MapIO
 	}
 	
 	
+	public static void unPucker(int radius, int gradient, float seafloor, int xOffset, int yOffset, bool perlin, int s)
+	{
+		
+		//should fix with proper inputs
+		
+			
+				
+				float	r = UnityEngine.Random.Range(0,10000)/100f;
+				float	r1 =  UnityEngine.Random.Range(0,10000)/100f;
+			
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+			
+			float[,] perlinShape = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			
+			float[,] puckeredMap = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			int distance = 0;
+			
+			Vector2 focusA = new Vector2(baseMap.GetLength(0)/2f+xOffset,baseMap.GetLength(0)/2f+yOffset);
+			Vector2 focusB = new Vector2(baseMap.GetLength(0)/2f-xOffset,baseMap.GetLength(0)/2f-yOffset);
+			
+			
+			Vector2 center = new Vector2(baseMap.GetLength(0)/2f,baseMap.GetLength(0)/2f);
+			Vector2 scanCord = new Vector2(0f,0f);
+			
+			int res = baseMap.GetLength(0);
+			
+				for (int i = 0; i < res; i++)
+				{
+					EditorUtility.DisplayProgressBar("Puckering", "making island",(i*1f/res));
+					for (int j = 0; j < res; j++)
+					{
+						scanCord.x = i; scanCord.y = j;
+						//circular
+						//distance = (int)Vector2.Distance(scanCord,center);
+						
+						distance = (int)Vector2.Distance(scanCord,focusA) + (int)Vector2.Distance(scanCord,focusB);
+						
+						//if distance from center less than radius, value is 1
+						if (distance < radius*2f)
+						{
+							puckeredMap[i,j] = 1f;
+						}
+						//otherwise the value should proceed to 0
+						else
+						{
+							puckeredMap[i,j] = 1f-(((distance-radius*2f)*1f) / (gradient*1f));
+							
+							if (puckeredMap[i,j] < 0)
+								puckeredMap[i,j] = 0;
+						}
+					
+					//unpuckering
+					puckeredMap[i,j] = 1-puckeredMap[i,j];
+					
+					}
+				}
+												
+
+			
+				for (int i = 0; i < res; i++)
+				{
+					EditorUtility.DisplayProgressBar("Puckering", "cutting channels",(i*1f/res));
+					for (int j = 0; j < res; j++)
+					{
+						
+						
+						if(perlin)
+						{
+							perlinShape[i,j] = Mathf.PerlinNoise(i*1f/s+r, j*1f/s+r1)*2f;
+							//clamp to 1
+							if (perlinShape[i,j] > 1f)
+								perlinShape[i,j] = 1f;
+							
+							baseMap[i,j] = Mathf.Lerp(seafloor, baseMap[i,j], perlinShape[i,j]);
+						}
+						
+						puckeredMap[i,j] = Mathf.Lerp(seafloor, baseMap[i,j], puckeredMap[i,j]);
+					}
+				}
+			
+			
+			EditorUtility.ClearProgressBar();
+			land.terrainData.SetHeights(0, 0, puckeredMap);
+	}
 	
 	public static void punch(float seafloor, int s)
 	{
@@ -3802,6 +3892,8 @@ public static class MapIO
 		float tempHeight=0f;
 		int xOff=0;
 		int yOff=0;
+		
+		float ratio = terrains.size.x / (baseMap.GetLength(0));
 		/*
 		
 		wikidpedia pseudocode:
@@ -3970,7 +4062,7 @@ public static class MapIO
 									geology = (Mathf.PerlinNoise(i*1f/80,j*1f/80))*20;
 									
 									//position is nearest highest pixel + zoffset
-									position = new Vector3(j *2f-(size*.5f)+yOff, height * sizeZ - (sizeZ*.5f) + zOffset,i *2f-(size*.5f)+xOff);
+									position = new Vector3(j *2f-(size/ratio)+yOff, height * sizeZ - (sizeZ*.5f) + zOffset,i *2f-(size/ratio)+xOff);
 									
 									//rotation gets geology and randomization
 									rRotate = new Vector3(UnityEngine.Random.Range(0, rotationRanges.x) + geology + flipX, UnityEngine.Random.Range(0, rotationRanges.y), UnityEngine.Random.Range(0,rotationRanges.z) + flipZ);
