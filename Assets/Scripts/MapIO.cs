@@ -18,6 +18,9 @@ public class CustomPrefab : MonoBehaviour
 
     }
 }
+
+
+
 public class PrefabExport
 {
     public int PrefabNumber
@@ -122,8 +125,23 @@ public struct Conditions
     }
 }
 [ExecuteAlways]
+
+public enum CLIFFS : uint
+	{
+		cliffA = 1894186663,
+		cliffB = 2182110394,
+		cliffC = 3085442290,
+		medA =   4293903506,
+		medB =   3386265599,
+		medC =   1858108294,
+		crystalA=4015636200,
+		crystalB=1637449643,
+		crystalC=1001999658
+	}
+
 public static class MapIO
-{
+{	
+	public static CLIFFS cliffset;
     #region Layers
     public static TerrainTopology.Enum topologyLayerFrom, topologyLayerToPaint, topologyLayer, targetTopologyLayer, conditionalTopology, topologyLayersList, oldTopologyLayer;
     public static TerrainSplat.Enum groundLayerFrom, targetTerrainLayer, groundLayerToPaint, terrainLayer, conditionalGround;
@@ -142,6 +160,9 @@ public static class MapIO
     public static Terrain terrain, water; 
     #region Editor Input Manager
     [InitializeOnLoadMethod]
+	
+	
+	
     static void EditorInit()
     {
         FieldInfo info = typeof(EditorApplication).GetField("globalEventHandler", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
@@ -3850,34 +3871,37 @@ public static class MapIO
 		
 	}
 	
-	public static void insertPrefabCliffs(WorldSerialization blob, Vector3 rotationRanges, int s1, int s2, int k, float zOffset, int density, float floor)
+	public static void insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping)
 	{
 		
 				
 		
-		WorldConverter.MapInfo terrains = WorldConverter.worldToTerrain(blob);
+		
 		
 		
 		Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
 		float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
-		float[,,] monumentMap = LandData.topologyArray[10];
+		float[,,] avoidMap = LandData.topologyArray[TerrainTopology.TypeToIndex((int)targetTopologyLayer)];
 		
 		Transform prefabsParent = GameObject.FindGameObjectWithTag("Prefabs").transform;
 		GameObject defaultObj = Resources.Load<GameObject>("Prefabs/DefaultPrefab");
         
+		int count = 0;
 		int res = baseMap.GetLength(0);
 		int size = (int)land.terrainData.size.x;
 		int sizeZ = (int)land.terrainData.size.y;
 		
 		Vector3 position;
 		Vector3 rRotate;
+		Vector3 rScale;
+		
 		float[] heights = new float[9];
 		int p = 0;
 		float geology = new float();
 		int flipX=0;
 		int flipZ=0;
 		float slope=0;
-
+		float avoider = 1f;
 		float[,] cliffMap = new float[res,res];
 		
 		float slopeDiff = 0f;
@@ -3893,7 +3917,12 @@ public static class MapIO
 		int xOff=0;
 		int yOff=0;
 		
-		float ratio = terrains.size.x / (baseMap.GetLength(0));
+		float ratio = land.terrainData.size.x / (baseMap.GetLength(0));
+		
+		if (avoid)
+		{
+			avoider=.01f;
+		}
 		/*
 		
 		wikidpedia pseudocode:
@@ -4023,7 +4052,7 @@ public static class MapIO
 				
 						
 				
-				if(baseMap[i,j] > floor/1000f && monumentMap[i,j,0] <.01f && cliffMap[i,j]>=.5f && slope > s1 && slope < s2)
+				if(baseMap[i,j] > floor/1000f && avoidMap[i,j,0] < avoider && cliffMap[i,j]>=.5f && slope > s1 && slope < s2)
 				{
 					//for debugging
 							//monumentMap[i,j,0] = 1f;
@@ -4055,24 +4084,34 @@ public static class MapIO
 									GameObject newObj;
 																		
 									//chance of flipping 180 on x or z for 'variety'
+									if(flipping)
+									{
 									flipX = UnityEngine.Random.Range(0,2) * 180;
 									flipZ = UnityEngine.Random.Range(0,2) * 180;
-									
+									}
 									//lean and displace each rock for 'geology'
+									if(tilting)
+									{
 									geology = (Mathf.PerlinNoise(i*1f/80,j*1f/80))*20;
-									
+									}
+									//geolog = 0f;
 									//position is nearest highest pixel + zoffset
-									position = new Vector3(j *2f-(size/ratio)+yOff, height * sizeZ - (sizeZ*.5f) + zOffset,i *2f-(size/ratio)+xOff);
+									position = new Vector3(j *ratio-(size/2f)+yOff*ratio, height * sizeZ - (sizeZ*.5f) + zOffset,i *ratio-(size/2f)+xOff*ratio);
 									
 									//rotation gets geology and randomization
-									rRotate = new Vector3(UnityEngine.Random.Range(0, rotationRanges.x) + geology + flipX, UnityEngine.Random.Range(0, rotationRanges.y), UnityEngine.Random.Range(0,rotationRanges.z) + flipZ);
+									rRotate = new Vector3(UnityEngine.Random.Range(rotationRange1.x, rotationRange2.x) + geology + flipX, UnityEngine.Random.Range(rotationRange1.y, rotationRange2.y), UnityEngine.Random.Range(rotationRange1.z,rotationRange2.z) + flipZ);
+									rScale = new Vector3(UnityEngine.Random.Range(scaleRange1.x, scaleRange2.x), UnityEngine.Random.Range(scaleRange1.y, scaleRange2.y), UnityEngine.Random.Range(scaleRange1.z,scaleRange2.z));
 									
-									//spawn object from cliffset with index k
+									//public static void createPrefab(string category, uint id, Vector3 position, Vector3 rotation, Vector3 scale)
+									createPrefab("Decor", featPrefabID, position, rRotate, rScale);
+									/*
 									newObj = reeSpawnPrefab(position, rRotate, defaultObj, terrains.prefabData[k], prefabsParent);
 									newObj.GetComponent<PrefabDataHolder>().prefabData.id = terrains.prefabData[k].id;
 									newObj.GetComponent<PrefabDataHolder>().prefabData.category = terrains.prefabData[k].category;
 									newObj.GetComponent<PrefabDataHolder>().prefabData.scale = terrains.prefabData[k].scale;
-							
+									*/
+									count++;
+									
 				}
 				
 				
@@ -4080,7 +4119,37 @@ public static class MapIO
 			
         }
 		EditorUtility.ClearProgressBar();
+		EditorUtility.DisplayDialog("Complete", count + " Geology Features Placed.", "Ok", "Great!");
 	}
+	
+	
+	/*
+	public class PrefabData
+	{
+		[ProtoMember(1)] public string category;
+		[ProtoMember(2)] public uint id;
+		[ProtoMember(3)] public VectorData position;
+		[ProtoMember(4)] public VectorData rotation;
+		[ProtoMember(5)] public VectorData scale;
+	}
+	*/
+	public static void createPrefab(string category, uint id, Vector3 position, Vector3 rotation, Vector3 scale)
+    {
+		Transform prefabsParent = GameObject.FindGameObjectWithTag("Prefabs").transform;
+		GameObject defaultObj = Resources.Load<GameObject>("Prefabs/DefaultPrefab");
+		PrefabData newPrefab = new PrefabData();
+		
+		var prefab = new PrefabData();
+
+		prefab.category = category;
+		prefab.id = id;
+		prefab.position = position;
+		prefab.rotation = rotation;
+		prefab.scale = scale;
+
+		
+		SpawnPrefab(defaultObj, prefab, prefabsParent);
+    }
 	
 	public static GameObject reeSpawnPrefab(Vector3 pos, Vector3 rot, GameObject g, PrefabData prefabData, Transform parent = null)
     {

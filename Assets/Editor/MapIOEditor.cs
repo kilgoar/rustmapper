@@ -16,6 +16,7 @@ public class MapIOEditor : EditorWindow
 	
 	int pDiam = 600, pGradient = 100, pXoff = 15, pYoff = 20, channelSize = 250;
 	bool channels = true;
+	bool proportion = true;
 	int seafloor = 450;
 	
 	float tttWeight = .6f;
@@ -31,6 +32,11 @@ public class MapIOEditor : EditorWindow
 	bool trFlat = true;
 	bool trCirc = true;
 	bool trPerlin = true;
+	
+	bool avoidTopo = true;
+	bool flipping = true;
+	bool tilting = true;
+	
 	int trZ = 503;
 	int trLow = 2;
 	int trHigh = 20;
@@ -62,7 +68,10 @@ public class MapIOEditor : EditorWindow
 	int cliffI = 0, cliffD = 65, cliffF = 500;
 	float cliffZ = -16.8f;
 	string cliffFile = "";
-	Vector3 rotations = new Vector3(4, 300, 4);
+	Vector3 scales1 = new Vector3 (0, 0, 0);
+	Vector3 scales2 = new Vector3 (0, 0, 0);
+	Vector3 rotations1 = new Vector3(0, 0, 0);
+	Vector3 rotations2 = new Vector3(0, 0, 0);
 	
     int mapSize = 2000, mainMenuOptions = 0, toolsOptions = 0, mapToolsOptions = 0, heightMapOptions = 0, conditionalPaintOptions = 0, prefabOptions = 0;
     float heightToSet = 450f, offset = 0f;
@@ -99,6 +108,9 @@ public class MapIOEditor : EditorWindow
     string[] activeTextureAlpha = { "Visible", "Invisible" };
     string[] activeTextureTopo = { "Active", "Inactive" };
 
+	float featX1rot=0f, featX2rot = 360f, featY1rot=0f, featY2rot=360f, featZ1rot=0f, featZ2rot=360f, featX1scale=1f, featX2scale=1f, featY1scale=1f, featY2scale=1f, featZ1scale=1f, featZ2scale=1f;
+
+	uint featPrefabID;
 
 
     [MenuItem("Rust Map Editor/Main Menu", false, 0)]
@@ -857,42 +869,120 @@ public class MapIOEditor : EditorWindow
 					
                         break;
                     case 1:
-					GUILayout.Label("Feature Placement", EditorStyles.boldLabel);
+					GUILayout.Label("Feature Attributes", EditorStyles.boldLabel);
+					//MapIO.terrainLayer = (TerrainSplat.Enum)EditorGUILayout.EnumPopup("Texture", MapIO.terrainLayer);
+					MapIO.cliffset = (CLIFFS)EditorGUILayout.EnumPopup("Prefab", MapIO.cliffset);
+					featPrefabID = (uint)MapIO.cliffset;
+					featPrefabID = (uint)EditorGUILayout.LongField("ID:", featPrefabID);
+					
+					GUILayout.Label("Rotation range:", EditorStyles.boldLabel);
+					
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("x",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featX1rot, ref featX2rot, 0f, 360f);
+					EditorGUILayout.LabelField(featX1rot.ToString("0.#") + " - " + featX2rot.ToString("0.#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("y",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featY1rot, ref featY2rot, 0f, 360f);
+					EditorGUILayout.LabelField(featY1rot.ToString("0.#") + " - " + featY2rot.ToString("0.#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("z",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featZ1rot, ref featZ2rot, 0f, 360f);
+					EditorGUILayout.LabelField(featZ1rot.ToString("0.#") + " - " + featZ2rot.ToString("0.#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					GUILayout.Label("Scale range:", EditorStyles.boldLabel);
+					
+					//lock toggle
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("x",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featX1scale, ref featX2scale, 0f, 5f);
+					EditorGUILayout.LabelField(featX1scale.ToString("0.0#") + " - " + featX2scale.ToString("0.0#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("y",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featY1scale, ref featY2scale, 0f, 5f);
+					
+					EditorGUILayout.LabelField(featY1scale.ToString("0.0#") + " - " + featY2scale.ToString("0.0#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField("z",GUILayout.MaxWidth(10));
+					EditorGUILayout.MinMaxSlider(ref featZ1scale, ref featZ2scale, 0f, 5f);
+					
+					EditorGUILayout.LabelField(featZ1scale.ToString("0.0#") + " - " + featZ2scale.ToString("0.0#") ,GUILayout.MaxWidth(80));
+					EditorGUILayout.EndHorizontal();
+					
+					proportion = EditorGUILayout.ToggleLeft("Lock to x", proportion, GUILayout.MaxWidth(150));
+					if (proportion)
+					{
+						featY1scale = featX1scale;
+						featY2scale = featX2scale;
+						featZ1scale = featX1scale;
+						featZ2scale = featX2scale;
+					}
+					
+					GUILayout.Label("Placement", EditorStyles.boldLabel);
+					
                             EditorGUILayout.BeginHorizontal();
-                            GUILayout.Label("Slope Range: " + slopeLow.ToString() + "° - " + slopeHigh.ToString() + "°");
+                            GUILayout.Label("Slope Range: " + slopeLow.ToString("0.0#") + "° - " + slopeHigh.ToString("0.0#") + "°");
                             EditorGUILayout.EndHorizontal();
 							
                             EditorGUILayout.MinMaxSlider(ref slopeLow, ref slopeHigh, 0f, 90f);
+							
+							EditorGUILayout.BeginHorizontal();
+							avoidTopo = EditorGUILayout.ToggleLeft("", avoidTopo, GUILayout.MaxWidth(50));
+							MapIO.targetTopologyLayer = (TerrainTopology.Enum)EditorGUILayout.EnumPopup("Do not place on topology:", MapIO.targetTopologyLayer);
+							EditorGUILayout.EndHorizontal();
 					
-					rotations = EditorGUILayout.Vector3Field("Max rotation", rotations);
+					//rotations = EditorGUILayout.Vector3Field("Max rotation", rotations);
 					
 					cliffZ = EditorGUILayout.FloatField("Height Offset", cliffZ);
 					cliffD = EditorGUILayout.IntField("Density", cliffD);
 					cliffF = EditorGUILayout.IntField("Floor", cliffF);
 					
-					GUILayout.Label("Prefab Data", EditorStyles.boldLabel);
 					
-					cliffI = EditorGUILayout.IntField("Index", cliffI);
+					GUILayout.Label("Styling", EditorStyles.boldLabel);
+					flipping = EditorGUILayout.ToggleLeft("Flipping", flipping);
+					tilting = EditorGUILayout.ToggleLeft("Gradient Dipping", tilting);
+					
+					//GUILayout.Label("Prefab Data", EditorStyles.boldLabel);
+					//cliffI = EditorGUILayout.IntField("Index", cliffI);
 					
 					
 
 					
-					//insertPrefabCliffs(WorldSerialization blob, Vector3 rotationRanges, int s1, int s2, int k, float zOffset, int density, float floor)
 					
-					EditorGUILayout.BeginHorizontal();
-					if (GUILayout.Button("Browse",GUILayout.MaxWidth(55)))
-					{
-						loadFile = UnityEditor.EditorUtility.OpenFilePanel("Cliffsets", cliffFile, "cliffset.map");
-					}
-						
-						loadFile = GUILayout.TextArea(loadFile);
-					EditorGUILayout.EndHorizontal();
+					
 					
 					if (GUILayout.Button("Apply"))
 						{
-							var blob = new WorldSerialization();
-							blob.Load(cliffFile);
-                            MapIO.insertPrefabCliffs(blob, rotations, (int)slopeLow, (int)slopeHigh, cliffI, cliffZ, cliffD, cliffF/1000f);
+							rotations1.x = featX1rot;
+							rotations1.y = featY1rot;
+							rotations1.z = featZ1rot;
+							
+							rotations2.x = featX2rot;
+							rotations2.y = featY2rot;
+							rotations2.z = featZ2rot;
+							
+							scales1.x = featX1scale;
+							scales1.y = featY1scale;
+							scales1.z = featZ1scale;
+							
+							scales2.x = featX2scale;
+							scales2.y = featY2scale;
+							scales2.z = featZ2scale;
+							
+							
+                            MapIO.insertPrefabCliffs(featPrefabID, rotations1, rotations2, scales1, scales2, (int)slopeLow, (int)slopeHigh, cliffZ, cliffD, cliffF/1000f, avoidTopo, tilting, flipping);
+							
+								//public static void insertPrefabCliffs(Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor)
+
 						}
 						
 						
@@ -904,8 +994,8 @@ public class MapIOEditor : EditorWindow
 			{
 				ArenaHeightmap();
 				ArenaTextures();
-				WaterworldTopologies();
-				WaterworldFinalizing();				
+				//WaterworldTopologies();
+				//WaterworldFinalizing();				
 				
 			}
 			
@@ -2514,22 +2604,22 @@ public class MapIOEditor : EditorWindow
 			
 			//NB: cliffset sizes lower than 4096 are fine, but cliffsets MUST match the initial map size or else the cliffs will be off register.
 			
-			MapIO.topologyLayer = TerrainTopology.Enum.Monument;
-			MapIO.ChangeLandLayer();
+			//MapIO.topologyLayer = TerrainTopology.Enum.Monument;
+			//MapIO.ChangeLandLayer();
 			
 			//this controls randomized rotations
-			Vector3 rotters = new Vector3(10, 300, 10);
-			var blob = new WorldSerialization();
+			//Vector3 rotters = new Vector3(10, 300, 10);
+			//var blob = new WorldSerialization();
 			
-			blob.Load("monuments/3000/cliffset.monument.map");
+			//blob.Load("monuments/3000/cliffset.monument.map");
 
             //blob, random rotation ranges, slope lower bound, slope higher bound, cliffset index,  prefab z Offset,
             //cliff density from 0-100, lowest height boundary 0-1000
 
-            MapIO.insertPrefabCliffs(blob,  rotters, 65, 90, 1, -16.4f,50,480f);
-            MapIO.insertPrefabCliffs(blob,  rotters, 40, 65, 1, -16.4f,55,495f);
-            MapIO.insertPrefabCliffs(blob,  rotters, 30, 40, 1, -16.4f,60,495f);
-            MapIO.insertPrefabCliffs(blob,  rotters, 25, 30, 0, -6.4f,65,495f);
+            //MapIO.insertPrefabCliffs(blob,  rotters, 65, 90, 1, -16.4f,50,480f);
+            //MapIO.insertPrefabCliffs(blob,  rotters, 40, 65, 1, -16.4f,55,495f);
+            //MapIO.insertPrefabCliffs(blob,  rotters, 30, 40, 1, -16.4f,60,495f);
+            //MapIO.insertPrefabCliffs(blob,  rotters, 25, 30, 0, -6.4f,65,495f);
 		}
 		
         #endregion
