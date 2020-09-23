@@ -21,6 +21,9 @@ public class MapIOEditor : EditorWindow
 	
 	float tttWeight = .6f;
 
+	int giantSize = 0;
+	int giantVert = 0;
+
     string[] landLayers = { "Ground", "Biome", "Alpha", "Topology" };
     string loadFile = "";
     string saveFile = "";
@@ -32,10 +35,14 @@ public class MapIOEditor : EditorWindow
 	bool trFlat = true;
 	bool trCirc = true;
 	bool trPerlin = true;
+	int trDense = 50;
 	
-	bool avoidTopo = true;
-	bool flipping = true;
-	bool tilting = true;
+	bool avoidTopo = false;
+	bool flipping = false;
+	bool tilting = false;
+	bool normalizeX = false;
+	bool normalizeY = false;
+	bool normalizeZ = false;
 	
 	int trZ = 503;
 	int trLow = 2;
@@ -65,7 +72,7 @@ public class MapIOEditor : EditorWindow
 	bool tog1 = true;
 	
 	
-	int cliffI = 0, cliffD = 65, cliffF = 500;
+	int cliffI = 0, cliffD = 65, cliffF = 500, cliffS = 3, cliffC = 1000;
 	float cliffZ = -16.8f;
 	string cliffFile = "";
 	Vector3 scales1 = new Vector3 (0, 0, 0);
@@ -634,8 +641,7 @@ public class MapIOEditor : EditorWindow
                             MapIO.paintTopologyOutline(thicc);
 						}
 						thicc = EditorGUILayout.IntField("Thickness:", thicc);
-						if (thicc > 6)
-							thicc = 5;
+						
 						EditorGUILayout.EndHorizontal();
 						
 						GUILayout.Label("Ground Combinator", EditorStyles.boldLabel);
@@ -697,6 +703,16 @@ public class MapIOEditor : EditorWindow
                             MapIO.perlinSaiyan(layer, period, scaley);
 							}
 							
+					EditorGUILayout.LabelField("Generate Perlin Terrain", EditorStyles.boldLabel);
+					layer = EditorGUILayout.IntField("Layers:", layer);
+					period = EditorGUILayout.IntField("Period:", period);
+					scaley = EditorGUILayout.FloatField("Scale:", scaley);
+					
+							if (GUILayout.Button("Apply"))
+							{
+                            MapIO.perlinChakotay(layer, period, scaley);
+							}
+							
 
 					EditorGUILayout.LabelField("Generate Sharp Terrain", EditorStyles.boldLabel);
 					dsR = EditorGUILayout.IntField("Roughness", dsR);
@@ -705,6 +721,11 @@ public class MapIOEditor : EditorWindow
 					if (GUILayout.Button("Apply"))
 					{
                             MapIO.diamondSquareNoise(dsR, dsH, dsW);
+					}
+					
+					if (GUILayout.Button("Circular fold"))
+					{
+                            MapIO.terrainFold();
 					}
 					
 					
@@ -732,7 +753,8 @@ public class MapIOEditor : EditorWindow
 					
 					trCirc = EditorGUILayout.Toggle("Smooth", trCirc);
 					
-					trPerlin = EditorGUILayout.Toggle("Banks", trPerlin);
+					trPerlin = EditorGUILayout.Toggle("Density", trPerlin);
+					trDense = EditorGUILayout.IntField("", trDense);
 					EditorGUILayout.EndHorizontal();
 					
 					EditorGUILayout.BeginHorizontal();
@@ -745,7 +767,7 @@ public class MapIOEditor : EditorWindow
 					
 					if (GUILayout.Button("Apply"))
 					{
-                            MapIO.bluffTerracing(trFlat, trPerlin, trCirc, trWeight, trZ, trLow, trHigh, trCount, trDescale);
+                            MapIO.bluffTerracing(trFlat, trPerlin, trCirc, trWeight, trZ, trLow, trHigh, trCount, trDescale, trDense);
 					}
 					
 					
@@ -774,7 +796,7 @@ public class MapIOEditor : EditorWindow
 					
 					if (GUILayout.Button("Apply"))
 					{
-                            MapIO.pucker(pDiam/2, pGradient, seafloor/1000f, pXoff, pYoff, channels, channelSize);
+                            MapIO.oceans(pDiam/2, pGradient, seafloor/1000f, pXoff, pYoff, channels, channelSize);
 					}
 										
                                         
@@ -826,6 +848,12 @@ public class MapIOEditor : EditorWindow
                                         {
                             MapIO.NormaliseHeightmap(normaliseLow / 1000f, normaliseHigh / 1000f);
                                         }
+										if (GUILayout.Button(new GUIContent("Find min/max", "Sets the normaliser to the minimum and maximum values of the heightmap")))
+                                        {
+											normaliseLow = MapIO.minMaxHeight().x*1000f;
+											normaliseHigh = MapIO.minMaxHeight().y*1000f;
+										}
+										
                                         autoUpdate = EditorGUILayout.ToggleLeft(new GUIContent("Auto Update", "Automatically applies the changes to the heightmap on value change."), autoUpdate);
                                         EditorGUILayout.EndHorizontal();
 										
@@ -944,12 +972,18 @@ public class MapIOEditor : EditorWindow
 					
 					cliffZ = EditorGUILayout.FloatField("Height Offset", cliffZ);
 					cliffD = EditorGUILayout.IntField("Density", cliffD);
+					cliffS = EditorGUILayout.IntField("Frequency", cliffS);
 					cliffF = EditorGUILayout.IntField("Floor", cliffF);
+					cliffC = EditorGUILayout.IntField("Ceiling", cliffC);
 					
 					
 					GUILayout.Label("Styling", EditorStyles.boldLabel);
 					flipping = EditorGUILayout.ToggleLeft("Flipping", flipping);
-					tilting = EditorGUILayout.ToggleLeft("Gradient Dipping", tilting);
+					tilting = EditorGUILayout.ToggleLeft("Geological shift", tilting);
+					
+					//normalizeX = EditorGUILayout.ToggleLeft("Orient to X slope", normalizeX);
+					//normalizeY = EditorGUILayout.ToggleLeft("Orient to Y slope", normalizeY);
+					//normalizeZ = EditorGUILayout.ToggleLeft("Orient to Z slope", normalizeZ);
 					
 					//GUILayout.Label("Prefab Data", EditorStyles.boldLabel);
 					//cliffI = EditorGUILayout.IntField("Index", cliffI);
@@ -978,17 +1012,125 @@ public class MapIOEditor : EditorWindow
 							scales2.y = featY2scale;
 							scales2.z = featZ2scale;
 							
-							
-                            MapIO.insertPrefabCliffs(featPrefabID, rotations1, rotations2, scales1, scales2, (int)slopeLow, (int)slopeHigh, cliffZ, cliffD, cliffF/1000f, avoidTopo, tilting, flipping);
+							//	public static void insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, int thinnitude, float floor, float ceiling, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+
+                            MapIO.insertPrefabCliffs(featPrefabID, rotations1, rotations2, scales1, scales2, (int)slopeLow, (int)slopeHigh, cliffZ, cliffD, cliffS, cliffF/1000f, cliffC/1000f, avoidTopo, tilting, flipping, normalizeX, normalizeY, normalizeZ);
 							
 								//public static void insertPrefabCliffs(Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor)
 
 						}
-						
+					GUILayout.Label("Sphube Grapher", EditorStyles.boldLabel);
+					giantSize = EditorGUILayout.IntField("Size", giantSize);
+					giantVert = EditorGUILayout.IntField("Frequency", giantVert);
+					if (GUILayout.Button("Apply Starry night"))
+						{
+							MapIO.starryNight(giantSize,giantVert);
+						}
 						
                     break;
 						
                 case 2:
+			
+			if (GUILayout.Button("Free Mars"))
+			{
+				FreeMars();
+				FreeMarsCliffs();
+				FreeMarsTextures();
+				WastelandTopologies();
+			}
+			
+			if (GUILayout.Button("One Grid Pluto"))
+			{
+				oneGridPluto();
+				PwyllTextures();
+				pwyllTopologies();
+				PwyllCliffs();
+			}
+			
+			if (GUILayout.Button("One grid wild west"))
+			{
+				smallFreeMars();
+				FreeMarsCliffs();
+				FreeMarsTextures();
+				WastelandTopologies();
+			}
+			
+			
+			if (GUILayout.Button("China"))
+			{
+				ChinaHeights();
+				
+			}
+	
+			if (GUILayout.Button("China river cliffs"))
+			{
+				
+				ChinaRiverCliffs();
+				
+			}
+			
+	
+			if (GUILayout.Button("China cliffs"))
+			{
+				
+				ChinaCliffs();
+				
+			}
+			
+			if (GUILayout.Button("China plains"))
+			{
+				
+				ChinaPlains();
+				
+			}
+			
+			if (GUILayout.Button("Trash Dressings"))
+			{
+				
+				TrashWorld();
+				
+			}
+			
+			if (GUILayout.Button("Large FreeMars"))
+			{
+				FreeMarsLarger();
+				FreeMarsCliffs();
+				FreeMarsTextures();
+				WastelandTopologies();
+			}
+			
+			if (GUILayout.Button("Pwyll Cliffs"))
+			{
+				PwyllCliffs();
+			}
+			
+			if (GUILayout.Button("Pwyll"))
+			{
+				PwyllHeightmap();
+				PwyllTextures();
+				pwyllTopologies();
+				PwyllCliffs();
+			}
+			
+			if (GUILayout.Button("Greenland"))
+			{
+				GreenlandHeightmap();
+				GreenlandTextures();
+				GreenlandCliffs();
+			}
+			
+			
+			if (GUILayout.Button("No Oceans"))
+			{
+				NoOceans();
+			}
+			
+			if (GUILayout.Button("Egypt Rock Fields"))
+			{
+				
+				EgyptCliffs();
+				
+			}
 			
 			if (GUILayout.Button("Switchyard Arena"))
 			{
@@ -996,6 +1138,12 @@ public class MapIOEditor : EditorWindow
 				ArenaTextures();
 				//WaterworldTopologies();
 				//WaterworldFinalizing();				
+				
+			}
+			
+			if (GUILayout.Button("BR Heightmap"))
+			{
+				HighwayHeightmap();		
 				
 			}
 			
@@ -1026,37 +1174,24 @@ public class MapIOEditor : EditorWindow
 				
 			}
 			
-			if (GUILayout.Button("Atoll heightmaps"))
+			if (GUILayout.Button("Atolls"))
 			{
 				WaterworldClassicHeightmap();
 				
 			}
-			
-			
-			
-			if (GUILayout.Button("Atoll textures monuments etc"))
-			{
-				WaterworldTextures();
 
-				
 
-				WaterworldClassicMonuments();
-				
-				WaterworldTopologies();	
-				
-				WaterworldFinalizing();
-				//WaterworldCliffs();
-				
-			}
 			
-			if (GUILayout.Button("Small Island Map"))
+			
+			
+			if (GUILayout.Button("Small Islands"))
 			{
 				WaterworldHeightmap();
-				WaterworldTextures();
+				LargeislandTextures();
 
 				WaterworldTopologies();	
 
-				WaterworldMonuments();
+				//WaterworldMonuments();
 				
 				WaterworldFinalizing();
 				WaterworldCliffs();
@@ -1065,32 +1200,6 @@ public class MapIOEditor : EditorWindow
 						
 			
 			
-			if (GUILayout.Button("Small Island Map Topos"))
-			{
-
-				WaterworldTopologies();
-				WaterworldFinalizing();
-			}
-			
-
-
-			if (GUILayout.Button("Small Island Monuments"))
-			{
-				WaterworldMonuments();
-			}
-			
-			if (GUILayout.Button("Small Island Monuments bullshit"))
-			{
-				WaterworldTopologies();
-				WaterworldFinalizing();
-				WaterworldCliffs();
-			}
-			
-			if (GUILayout.Button("Small Islands textures + topos"))
-			{
-				WaterworldTextures();
-				WaterworldTopologies();
-			}
 		
 		if (GUILayout.Button("Cliffs Heightmap"))
 		{
@@ -1109,7 +1218,7 @@ public class MapIOEditor : EditorWindow
 
                             MapIO.punch(.503f, 200);
 
-                            MapIO.bluffTerracing(true, true, true, .6f, 530, 30, 40, 10, 3);
+                            MapIO.bluffTerracing(true, true, true, .6f, 530, 30, 40, 10, 3, 50);
                             //MapIO.bluffTerracing(false, true, true, .6f, 505, 20, 30, 10, 3);
 
                             MapIO.pucker(600, 600, .450f, 200, 500, true, 350);
@@ -1117,7 +1226,7 @@ public class MapIOEditor : EditorWindow
 
 
 
-                            MapIO.bluffTerracing(false, true, true, 1f, 499, 3, 3, 1, 0);
+                            MapIO.bluffTerracing(false, true, true, 1f, 499, 3, 3, 1, 0, 50);
 			
 		}	
 
@@ -1170,6 +1279,34 @@ public class MapIOEditor : EditorWindow
 								}
 								
 		//hate the swamps?
+		
+		if (GUILayout.Button("Arena Placer"))
+			
+		{
+			var blob = new WorldSerialization();
+	
+					blob.Load("monuments/3000/lobby.monument.map");
+					MapIO.pasteMonument(blob, 500, 500, .02f);
+
+					
+					blob.Load("monuments/3000/exit3e.monument.map");
+					MapIO.pasteMonument(blob, 1000, 1000, .012f);
+
+					
+					blob.Load("monuments/3000/switchyard.monument.map");
+					MapIO.pasteMonument(blob, 1000, 500, 0.02f);
+
+					
+					blob.Load("monuments/3000/barrage.monument.map");
+					MapIO.pasteMonument(blob, 500, 1000, 0.02f);
+
+				
+					blob.Load("monuments/3000/RapaNui.monument.map");
+					MapIO.pasteMonument(blob, 1500, 1500, 0.02f);
+
+			
+		}
+		
 		if (GUILayout.Button("Swamp Replacer"))
 		{
 			
@@ -1225,6 +1362,18 @@ public class MapIOEditor : EditorWindow
 				
 			}
 			
+			
+		}
+		
+		if (GUILayout.Button("Delete all Prefabs not on Arid"))
+		{
+			MapIO.stripMonumentPrefabs();
+			
+		}
+		
+		if (GUILayout.Button("Delete ALL Prefabs"))
+		{
+			MapIO.deleteAllPrefabs();
 			
 		}
 								
@@ -1446,6 +1595,142 @@ public class MapIOEditor : EditorWindow
 		
 		}
 		
+		void EgyptHeightmap()
+		{
+			MapIO.NewEmptyTerrain(3800);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,35,110);
+			MapIO.NormaliseHeightmap(.450f, .650f);
+			
+			//dunes
+			
+			//	public static void bluffTerracing(bool flatten, bool perlinBanks, bool circular, float terWeight, int zStart, int gBot, int gTop, int gates, int descaler, int density)
+
+			MapIO.bluffTerracing(true, true, true, .9f, 625,10, 15, 3, 2,100);
+			MapIO.oceans(340, 400, .450f, 0, 0, true, 80);
+			
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			MapIO.SmoothHeightmap(1f, 1f);
+			
+		}
+		
+		void Oceansthreek()
+		{
+			MapIO.oceans(300, 400, .475f, 0, 0, true, 100);
+		}
+		
+		void NoOceans()
+		{
+			MapIO.oceans(300, 400, .502f, 0, 0, true, 100);
+		}
+		
+		void GreenlandHeightmap()
+		{
+			MapIO.NewEmptyTerrain(3000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3,15,48);
+			MapIO.NormaliseHeightmap(.563f, .572f);
+			MapIO.oceans(280, 600, .475f, 0, 0, true, 350);
+			
+		}
+		
+		void PwyllHeightmap()
+		{
+			MapIO.NewEmptyTerrain(3000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinSaiyan(3,15,89);
+			//MapIO.InvertHeightmap();
+			MapIO.NormaliseHeightmap(.450f, .620f);
+			
+			//public static void bluffTerracing(bool flatten, bool perlinBanks, bool circular, float terWeight, int zStart, int gBot, int gTop, int gates, int descaler, int density)
+			MapIO.bluffTerracing(true,true,true,.1f,575,3,5,15,3,57);
+			MapIO.InvertHeightmap();
+			MapIO.NormaliseHeightmap(.505f, .572f);
+			//pucker(int radius, int gradient, float seafloor, int xOffset, yOffset, perlin cutouts, cutout scale
+            MapIO.oceans(280, 600, .475f, 0, 0, true, 350);
+			//beaches
+			MapIO.bluffTerracing(false,true,true,.99f,499,20,20,1,1,100);
+		}
+		
+		void ChinaRiver()
+		{
+			
+			MapIO.bluffTerracing(false,true,true,.99f,499,20,20,1,1,100);
+			ChinaRiverCliffs();
+		}
+		
+		void oneGridPluto()
+		{
+			MapIO.NewEmptyTerrain(1000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,3,79);
+			MapIO.NormaliseHeightmap(.505f, .545f);			
+			MapIO.bluffTerracing(true,true,true,.5f,525, 4,20,15,2,12);
+			MapIO.circleOceans(100,60,.575f,0,0,false,55);
+			MapIO.circleOceans(105,155,.540f,0,0,false,75);
+			MapIO.circleOceans(130,180,.530f,0,0,false,70);
+			MapIO.circleOceans(200,50,.480f,0,0,false,70);
+			
+			
+		}
+		
+		
+		
+		void smallFreeMars()
+		{
+			
+			MapIO.NewEmptyTerrain(1000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,40,120);
+			MapIO.NormaliseHeightmap(.500f, .660f);
+			MapIO.bluffTerracing(true,true,true,.5f,510, 4,20,15,2,12);
+			//pucker(int radius, int gradient, float seafloor, int xOffset, yOffset, perlin cutouts, cutout scale
+			MapIO.circleOceans(100,60,.575f,0,0,false,55);
+			MapIO.circleOceans(105,155,.540f,0,0,false,75);
+			MapIO.circleOceans(130,180,.530f,0,0,false,70);
+			
+            MapIO.oceans(80,70, .475f, 0, 0, true, 100);
+			
+		}
+		
+		void ChinaHeights()
+		{
+			MapIO.NewEmptyTerrain(2500);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,40,120);
+			MapIO.NormaliseHeightmap(.500f, .525f);
+		}
+		
+		
+		void FreeMars()
+		{
+			
+			MapIO.NewEmptyTerrain(3000);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,40,120);
+			MapIO.NormaliseHeightmap(.450f, .625f);
+			MapIO.bluffTerracing(true,true,true,.5f,547, 4,20,15,4,12);
+			//pucker(int radius, int gradient, float seafloor, int xOffset, yOffset, perlin cutouts, cutout scale
+            MapIO.oceans(300, 400, .475f, 0, 0, true, 100);
+			
+		}
+		
+		void FreeMarsLarger()
+		{
+			
+			MapIO.NewEmptyTerrain(4096);
+			MapIO.flattenWater(.5f);
+			MapIO.perlinChakotay(3,40,120);
+			MapIO.NormaliseHeightmap(.450f, .625f);
+			MapIO.bluffTerracing(true,true,true,.5f,547, 4,20,15,4,12);
+			//pucker(int radius, int gradient, float seafloor, int xOffset, yOffset, perlin cutouts, cutout scale
+            MapIO.oceans(365, 400, .475f, 0, 0, true, 100);
+			
+		}
+		
 		void WaterworldHeightmap()
 		{
             MapIO.NewEmptyTerrain(4096);
@@ -1456,9 +1741,9 @@ public class MapIOEditor : EditorWindow
 
             //overly recursive perlin layer averaging madness
             //           layers, scaling period, initial scale
-            MapIO.perlinSaiyan(4, 20, 45);
-            MapIO.zNudge(9);
-
+            MapIO.perlinSaiyan(3, 20, 145);
+			MapIO.NormaliseHeightmap(.430f, .585f);
+	
             //this adds a little micro roughness            
             MapIO.diamondSquareNoise(30, 10, 10);
 
@@ -1469,37 +1754,12 @@ public class MapIOEditor : EditorWindow
             // 'z initializing' is the baseline for where the erosion begins, and it will proceed upwards from there. 
             // Using the 'number of cliffs' the erosion algorithm will draw random numbers within the range (bottom height - top height) and erode cliffs that are that tall
             // By the 'downscaling factor' this script can flatten the terrain beneath the 'z-initializing' number. (downscaling must be true for this to have an effect).
+			MapIO.zNudge(-30f);
+            MapIO.bluffTerracing(true, true, true, .75f, 515, 5, 10, 3, 1,50);
 
-            //downscaling, 
-            //            perlin masking,
-            //                     circular(t) or triangular(f),
-            //										  opacity,
-            //                                             z initializing
-            //													bottom height randomnumber
-            //                                                     top height randomnumber
-            //                                                        number of cliffs
-            //                                                            downscaling factor
-            MapIO.bluffTerracing(true, true, true, 1f, 502, 3, 3, 1, 4);
-
-
-            //add cliffs                         
-
-            MapIO.bluffTerracing(false, true, true, 1f, 503, 6, 10, 1, 0);
-            //script.bluffTerracing(false, true, false, .8f, 502, 4, 6, 2, 0);
-
-
-            //this nudges the whole map down 1.5 units
-            MapIO.zNudge(-1.5f);
-
-
-            //Puckering punches down the edges of the map to the seafloor, creating a roughly ovular shape 
-
-            //While the 'perlin cutouts' are true, that also punches a few deeper channels in between the islands
-
-            //For a circular result zero out the offsets.
-
-            //pucker(int radius, int gradient, float seafloor, int xOffset, yOffset, perlin cutouts, cutout scale
-            MapIO.pucker(800, 300, .450f, 200, 600, true, 325);
+            
+            MapIO.oceans(340, 400, .450f, 0, 0, true, 80);
+			MapIO.bluffTerracing(false,true,true,.99f,499,20,20,1,1,100);
 				
 			
 			
@@ -1518,7 +1778,7 @@ public class MapIOEditor : EditorWindow
 			
 			MapIO.pucker(400, 150, .450f, 100, 0, true, 200);
 			//MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
-			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2,50);
 			MapIO.zNudge(1.5f);
 			
 			MapIO.SmoothHeightmap(1f, 1f);
@@ -1613,7 +1873,7 @@ public class MapIOEditor : EditorWindow
 			
 			MapIO.pucker(400, 150, .450f, 100, 0, true, 200);
 			MapIO.unPucker(300,150, .495f, 300, 100, false, 0);
-			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2,50);
 			MapIO.zNudge(1.5f);
 			
 			MapIO.SmoothHeightmap(1f, 1f);
@@ -1696,18 +1956,19 @@ public class MapIOEditor : EditorWindow
 		
 		void HighwayHeightmap()
 		{
-			MapIO.NewEmptyTerrain(2000);
+			MapIO.NewEmptyTerrain(2500);
 			MapIO.flattenWater(.5f);
-			MapIO.perlinSaiyan(3, 50, 250);
+			MapIO.perlinSaiyan(3, 5000, 200);
 			
 			
 			MapIO.diamondSquareNoise(20, 20, 20);
 			
 
 			
-			MapIO.pucker(400, 150, .450f, 200, 0, true, 400);
+			MapIO.pucker(650, 500, .450f, 500, 50, false, 250);
+			MapIO.zNudge(15f);
 			//MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
-			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
+			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2,50);
 			MapIO.zNudge(1.5f);
 			
 			MapIO.SmoothHeightmap(1f, 1f);
@@ -1822,19 +2083,21 @@ public class MapIOEditor : EditorWindow
 			script.bluffTerracing(false, true, true, 1f, 497, 10, 10, 1, 0);
 			
 			*/
-			MapIO.NewEmptyTerrain(3000);
+			MapIO.NewEmptyTerrain(2500);
 			MapIO.flattenWater(.5f);
 			MapIO.perlinSaiyan(3, 50, 120);
 			
 			
 			MapIO.diamondSquareNoise(20, 20, 20);
 			
-
 			
-			MapIO.pucker(800, 300, .450f, 0, 0, true, 200);
-			MapIO.unPucker(600,250, .495f, 300, 100, false, 0);
-			MapIO.bluffTerracing(true, true, true, 1f, 500, 5, 5, 1, 2);
-			MapIO.zNudge(1.5f);
+			
+			MapIO.pucker(700, 1200, .450f, 0, 100, true, 200);
+			MapIO.unPucker(400,900, .495f, 300, 500, false, 0);
+			
+			MapIO.zNudge(-18f);
+			MapIO.bluffTerracing(true, true, true, 1f, 499, 5, 5, 1, 2,50);
+			//MapIO.zNudge(1.5f);
 			
 			
 						//awesome I know
@@ -1910,7 +2173,6 @@ public class MapIOEditor : EditorWindow
 			MapIO.SmoothHeightmap(1f, 0f);
 			MapIO.SmoothHeightmap(1f, 0f);
 			MapIO.SmoothHeightmap(1f, 0f);
-			
 			
 			
 			
@@ -2145,6 +2407,242 @@ public class MapIOEditor : EditorWindow
 				
 		}
 		
+		void WastelandTopologies()
+			{
+			
+			//god bless this attempt
+			
+				MapIO.landLayer = "topology";
+				
+
+			//public static void PaintSlope(string landLayerToPaint, float slopeLow, float slopeHigh, float minBlendLow, float maxBlendHigh, int t, int topology = 0)
+			MapIO.ChangeLandLayer();
+			//MapIO.PaintSlope("Topology", 15f, 25f,15f,25f, 0,24); 
+			
+			//paint beaches
+				MapIO.topologyLayer = TerrainTopology.Enum.Beach;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(500,502);
+				
+				//paint oceansides
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Beach;
+				MapIO.topologyLayer = TerrainTopology.Enum.Oceanside;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+			
+			
+			//draw fields on grass
+				MapIO.targetTerrainLayer = TerrainSplat.Enum.Grass;
+				MapIO.topologyLayer = TerrainTopology.Enum.Field;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+
+			//draw fields on sand
+				MapIO.targetTerrainLayer = TerrainSplat.Enum.Sand;
+				MapIO.topologyLayer = TerrainTopology.Enum.Field;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.5f);
+				
+			//forest on forest
+				MapIO.targetTerrainLayer = TerrainSplat.Enum.Forest;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+			
+			//outline forest with forestside
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forestside;
+				MapIO.ChangeLandLayer();
+            MapIO.paintTopologyOutline(4);
+			
+			//forest on gravel
+			MapIO.targetTerrainLayer = TerrainSplat.Enum.Gravel;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+			
+			//paint riversides
+				MapIO.topologyLayer = TerrainTopology.Enum.Riverside;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(502,503);
+				
+			//nodes on stones
+			MapIO.targetTerrainLayer = TerrainSplat.Enum.Stones;
+				MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+			
+			MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.ChangeLandLayer();
+            MapIO.paintTopologyOutline(10);
+				
+				//erasing nodes
+			MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+			MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+			MapIO.ChangeLandLayer();
+            MapIO.eraseHeight(0, 510);
+			MapIO.eraseHeight(550, 1000);
+				
+								//erasing nodes
+			MapIO.targetTopologyLayer = TerrainTopology.Enum.Field;
+			MapIO.topologyLayer = TerrainTopology.Enum.Field;
+			MapIO.ChangeLandLayer();
+            MapIO.eraseHeight(0, 506);
+				
+				
+				//copy nodes
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Cliffside;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+				
+				//copy nodes
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Decor;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+				
+				
+				//paint oceans
+				MapIO.topologyLayer = TerrainTopology.Enum.Ocean;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(0,500);
+				
+				//paint offshore loot
+				MapIO.topologyLayer = TerrainTopology.Enum.Offshore;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(480,493);
+				
+				//paint mainlands
+				MapIO.topologyLayer = TerrainTopology.Enum.Mainland;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(500,1000);
+				
+				//paint t0
+				MapIO.topologyLayer = TerrainTopology.Enum.Tier0;
+				MapIO.ChangeLandLayer();
+            MapIO.invertTopologyLayer();
+				
+	
+			
+			MapIO.oldTopologyLayer = MapIO.topologyLayer;
+		}
+
+	void pwyllTopologies()
+			{
+			
+			//god bless this attempt
+			
+				MapIO.landLayer = "topology";
+				
+
+			//public static void PaintSlope(string landLayerToPaint, float slopeLow, float slopeHigh, float minBlendLow, float maxBlendHigh, int t, int topology = 0)
+			MapIO.ChangeLandLayer();
+			//MapIO.PaintSlope("Topology", 15f, 25f,15f,25f, 0,24); 
+			
+			//paint beaches
+				MapIO.topologyLayer = TerrainTopology.Enum.Beach;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(500,502);
+				
+				//paint oceansides
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Beach;
+				MapIO.topologyLayer = TerrainTopology.Enum.Oceanside;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+			
+			
+			//draw fields on grass
+				MapIO.targetTerrainLayer = TerrainSplat.Enum.Grass;
+				MapIO.topologyLayer = TerrainTopology.Enum.Field;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.5f);
+
+				
+			//forest on forest
+				MapIO.targetTerrainLayer = TerrainSplat.Enum.Forest;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.5f);
+			
+			//outline forest with forestside
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forestside;
+				MapIO.ChangeLandLayer();
+            MapIO.paintTopologyOutline(4);
+			
+			//forest on gravel
+			MapIO.targetTerrainLayer = TerrainSplat.Enum.Gravel;
+				MapIO.topologyLayer = TerrainTopology.Enum.Forest;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+			
+			//paint riversides
+				MapIO.topologyLayer = TerrainTopology.Enum.Riverside;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(502,503);
+				
+			//nodes on snow
+			MapIO.targetTerrainLayer = TerrainSplat.Enum.Snow;
+				MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.ChangeLandLayer();
+            MapIO.terrainToTopology(.2f);
+			
+				
+				//erasing nodes
+			MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+			MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+			MapIO.ChangeLandLayer();
+            MapIO.eraseHeight(0, 540);
+			
+						//outline nodes w/ nodes
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.ChangeLandLayer();
+            MapIO.paintTopologyOutline(5);
+				
+				
+				//copy nodes
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Cliffside;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+				
+				//copy nodes
+				MapIO.targetTopologyLayer = TerrainTopology.Enum.Clutter;
+				MapIO.topologyLayer = TerrainTopology.Enum.Decor;
+				MapIO.ChangeLandLayer();
+            MapIO.copyTopologyLayer();
+				
+				
+				//paint oceans
+				MapIO.topologyLayer = TerrainTopology.Enum.Ocean;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(0,500);
+				
+				//paint offshore loot
+				MapIO.topologyLayer = TerrainTopology.Enum.Offshore;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(470,480);
+				
+				//paint mainlands
+				MapIO.topologyLayer = TerrainTopology.Enum.Mainland;
+				MapIO.ChangeLandLayer();
+            MapIO.paintHeight(500,1000);
+				
+				//paint t0
+				MapIO.topologyLayer = TerrainTopology.Enum.Tier0;
+				MapIO.ChangeLandLayer();
+            MapIO.invertTopologyLayer();
+				
+	
+			
+			MapIO.oldTopologyLayer = MapIO.topologyLayer;
+		}
+
+
+		
 		void ArenaTextures()
 		{
 			MapIO.landLayer ="biome";
@@ -2314,10 +2812,143 @@ public class MapIOEditor : EditorWindow
 			
 		}
 		
+		void FreeMarsTextures()
+		{
+			MapIO.landLayer = "biome";
+			//MapIO.biomeGradients(25,25,40,40);
+			MapIO.PaintHeight("Biome", 0f, 950f, 0f, 1000f, 0);
+			MapIO.PaintHeight("Biome", 600f, 650f, 550f, 1000f, 2);
+			MapIO.PaintHeight("Biome", 0f, 515f, 0f, 520f, 1);
+
+			MapIO.landLayer ="ground";
+			
+			//paint Sand everywhere
+			MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+            MapIO.paintSplatHeight(0,1000);
+			
+			MapIO.PaintSlope("Ground",15f,25f,12f,26f, 6);
+			MapIO.PaintHeight("Ground", 504f, 515f, 502f, 517f, 4);
+			
+			MapIO.targetBiomeLayer = TerrainBiome.Enum.Temperate;
+			MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+			MapIO.paintPerlin(15, 1f, false, true);		
+
+			MapIO.PaintHeight("Ground", 0f, 503f, 0f, 505f, 2);
+			
+			MapIO.targetBiomeLayer = TerrainBiome.Enum.Tundra;
+			MapIO.terrainLayer = TerrainSplat.Enum.Rock;
+			MapIO.paintPerlin(15, 2f, false, true);
+            MapIO.paintTerrainSlope(38,90);
+			
+			MapIO.PaintHeight("Biome", 520f, 530f, 515f, 535f, 2);
+			
+			
+			//MapIO.PaintSlope("Topology", 15f, 25f,15f,25f, 0,24); 
+			
+			MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+			MapIO.paintSplatHeight(547,551);
+			
+			MapIO.terrainLayer = TerrainSplat.Enum.Gravel;
+			MapIO.targetBiomeLayer = TerrainBiome.Enum.Arid;
+			MapIO.paintPerlin(45, .8f, false, true);
+		}
+		
+		void GreenlandTextures()
+		{
+			MapIO.landLayer = "biome";
+			//MapIO.biomeGradients(25,25,40,40);
+			MapIO.PaintHeight("Biome", 0f, 950f, 0f, 1000f, 3);
+			
+			MapIO.landLayer ="ground";
+			
+			//paint Snow everywhere
+			MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+            MapIO.paintSplatHeight(0,1000);
+			//paint beach
+		}
+		
+	void PwyllTextures()
+		{
+			MapIO.landLayer = "biome";
+			//MapIO.biomeGradients(25,25,40,40);
+			MapIO.PaintHeight("Biome", 0f, 950f, 0f, 1000f, 3);
+			
+			//public static void PaintHeight(string landLayerToPaint, float heightLow, float heightHigh, float minBlendLow, float maxBlendHigh, int t, int topology = 0)
+    
+			MapIO.PaintHeight("Biome", 550f, 650f, 545f, 655f, 2);
+			MapIO.PaintHeight("Biome", 0f, 515f, 0f, 517f, 2);
+
+
+			MapIO.landLayer ="ground";
+			
+			//paint Snow everywhere
+			MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+            MapIO.paintSplatHeight(0,1000);
+			//paint beach
+			
+			
+
+			
+			MapIO.targetBiomeLayer = TerrainBiome.Enum.Tundra;
+			MapIO.terrainLayer = TerrainSplat.Enum.Grass;
+			MapIO.paintPerlin(20, 999f, false, true);
+			MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+			MapIO.paintPerlin(100, 1f, false, true);
+
+			//public static void PaintSlope(string landLayerToPaint, float slopeLow, float slopeHigh, float minBlendLow, float maxBlendHigh, int t, int topology = 0) // Paints slope based on the current slope input, the slope range is between 0 - 90
+    	
+			MapIO.terrainLayer = TerrainSplat.Enum.Snow;
+			//MapIO.paintTerrainSlope(30,40);
+			MapIO.PaintSlope("Ground",33,90,28,90,1);
+			
+			MapIO.terrainLayer = TerrainSplat.Enum.Gravel;
+			MapIO.targetBiomeLayer = TerrainBiome.Enum.Arctic;
+			MapIO.paintPerlin(45, .8f, false, true);
+			
+			MapIO.PaintHeight("Ground", 0f, 502f, 0f, 505f, 2);
+		}
+		
+		void LargeislandTextures()
+		{
+			MapIO.landLayer ="biome";
+			MapIO.PaintHeight("Biome", 0f, 950f, 0f, 1000f, 1);
+			
+			MapIO.landLayer ="ground";
+				//paint Dirt on temperate
+				MapIO.terrainLayer = TerrainSplat.Enum.Dirt;
+				MapIO.targetBiomeLayer = TerrainBiome.Enum.Temperate;
+            MapIO.paintPerlin(60, 1f, false, true);
+				
+				
+				//paint Forests
+				MapIO.terrainLayer = TerrainSplat.Enum.Forest;
+            //z is number of random zones, a is min size, a1 is max
+            MapIO.paintCrazing(1500, 1000, 2000);
+            MapIO.paintTerrainOutline(4, .667f);
+				
+				
+				//paint stones on steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Stones;
+            MapIO.paintTerrainSlope(35,90);
+				
+				//paint Rock on less steep areas
+				MapIO.terrainLayer = TerrainSplat.Enum.Rock;
+            MapIO.paintTerrainSlope(38,90);
+				
+				//paint Sand under water
+				MapIO.terrainLayer = TerrainSplat.Enum.Sand;
+            MapIO.paintSplatHeight(0,500);
+            MapIO.paintTerrainOutline(2, .667f);
+            
+			MapIO.PaintHeight("Ground", 0f, 502f, 0f, 505f, 2);
+			
+		}
+		
 		void WaterworldTextures()
 		{
 			MapIO.landLayer ="biome";
             MapIO.biomeGradients(25,25,40,40);
+			
 			MapIO.landLayer ="ground";
 				//paint Dirt on temperate
 				MapIO.terrainLayer = TerrainSplat.Enum.Dirt;
@@ -2586,6 +3217,421 @@ public class MapIOEditor : EditorWindow
 			
 			MapIO.oldTopologyLayer = MapIO.topologyLayer;
 		
+		}
+		
+		void HatefulSkullCliffs()
+		{
+			float floor = .51f;
+			float ceiling = .556f;
+			
+			Vector3 rotation1 = new Vector3(310f,0f,180f);
+			Vector3 rotation2 = new Vector3(310f,355f,180f);
+			Vector3 scale1 = new Vector3(46f,46f,46f);
+			Vector3 scale2 = new Vector3(46f,46f,46f);
+			
+
+			
+			MapIO.insertPrefabCliffs(278159127,  rotation1,rotation2,scale1,scale2,40,90, -14.8f, 69,7, floor, ceiling+.3f, false, true, true,false,false,false);
+			
+			
+			scale1 = new Vector3(19f,19f,19f);
+			scale2 = new Vector3(19f,19f,.19f);
+			
+			MapIO.insertPrefabCliffs(278159127,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			scale1 = new Vector3(11f,11f,11f);
+			scale2 = new Vector3(11f,11f,11f);
+			
+			MapIO.insertPrefabCliffs(278159127,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			scale1 = new Vector3(3.5f,3.5f,3.5f);
+			scale2 = new Vector3(3.5f,3.5f,3.5f);
+			
+			MapIO.insertPrefabCliffs(278159127,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+
+		}
+		
+		void ChinaPlains()
+		{
+			float floor = .51f;
+			float ceiling = .65f;
+			
+			//boulders
+			
+			Vector3 rotation1 = new Vector3(0f,0f,0f);
+			Vector3 rotation2 = new Vector3(0f,355f,0f);
+			Vector3 scale1 = new Vector3(1f,1f,1f);
+			Vector3 scale2 = new Vector3(1.5f,1.5f,1.5f);
+			
+			//insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+
+			
+			MapIO.insertPrefabCliffs(1298741248,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150,80, floor, ceiling, false, true, true,false,false,false);
+			
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1.5f,1.5f,1.5f);
+			
+			MapIO.insertPrefabCliffs(3216412203,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 80, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1.5f,1.5f,1.5f);
+			
+			MapIO.insertPrefabCliffs(717806699,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 80, floor, ceiling, false, true, true,false,false,false);
+			
+			//extra ferns
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(1f,359f,0f);
+			scale1 = new Vector3(2f,2f,2f);
+			scale2 = new Vector3(2.5f,2.5f,2.5f);
+			
+			MapIO.insertPrefabCliffs(3089296543,  rotation1,rotation2,scale1,scale2,0,15, 0f, 220, 10, floor, ceiling, false, false, false,false,false,false);
+			
+			//extra flowers
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(1f,359f,1f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1.5f,1.5f,1.5f);
+			
+			MapIO.insertPrefabCliffs(1812463585,  rotation1,rotation2,scale1,scale2,0,15, 0f, 220, 10, floor, ceiling, false, false, false,false,false,false);
+		
+		}
+		
+		
+		void FreeMarsCliffs()
+		{
+			
+			//1932032762 large smallrock
+			//2047045499 medium smallrock
+			//981545256 small smallrock
+			
+			//4054464859 ?
+			
+			//1894186663 ?
+			
+			//3241890436 ?
+			
+			//1229245979 ?
+			
+			//181322589 main
+			//insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+			
+			float floor = .51f;
+			float ceiling = .556f;
+			
+			Vector3 rotation1 = new Vector3(0f,0f,89f);
+			Vector3 rotation2 = new Vector3(3f,355f,91f);
+			Vector3 scale1 = new Vector3(1.8f,1.8f,1.8f);
+			Vector3 scale2 = new Vector3(2f,2f,2f);
+			
+
+			
+			MapIO.insertPrefabCliffs(181322589,  rotation1,rotation2,scale1,scale2,40,90, -14.8f, 69,5, floor, ceiling+.3f, false, true, true,false,false,false);
+			
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.75f,.75f,.75f);
+			scale2 = new Vector3(.75f,1f,.75f);
+			
+			MapIO.insertPrefabCliffs(1932032762,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(2047045499,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(981545256,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+		}
+		
+		void ChinaRiverCliffs()
+		{
+			float floor = .5f;
+			float ceiling = .556f;
+			
+			Vector3	rotation1 = new Vector3(0f,0f,0f);
+			Vector3 rotation2 = new Vector3(359f,359f,359f);
+			Vector3 scale1 = new Vector3(.75f,.75f,.75f);
+			Vector3 scale2 = new Vector3(.75f,1f,.75f);
+			
+			MapIO.insertPrefabCliffs(1932032762,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.75f,.75f,.75f);
+			
+			MapIO.insertPrefabCliffs(2047045499,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.5f,.5f,.5f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(981545256,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 14, floor, ceiling, false, true, true,false,false,false);
+		}
+		
+		void TrashWorld()
+		{
+			float floor = .5f;
+			float ceiling = 1f;
+			
+			Vector3 rotation1 = new Vector3(0f,0f,80f);
+			Vector3 rotation2 = new Vector3(0f,355f,100f);
+			Vector3 scale1 = new Vector3(3f,3f,3f);
+			Vector3 scale2 = new Vector3(3f,3f,3f);
+			
+			//shipping container cliffs
+			//insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+			
+			MapIO.insertPrefabCliffs(2337881356,  rotation1,rotation2,scale1,scale2,55,90, -10f, 150,50, floor, ceiling, false, true, false,false,false,false);
+			MapIO.insertPrefabCliffs(579459297,  rotation1,rotation2,scale1,scale2,55,90, -10f, 150,50, floor, ceiling, false, true, false,false,false,false);
+			MapIO.insertPrefabCliffs(241986762,  rotation1,rotation2,scale1,scale2,55,90, -10f, 150,50, floor, ceiling, false, true, false,false,false,false);
+			MapIO.insertPrefabCliffs(1776925867,  rotation1,rotation2,scale1,scale2,55,90, -10f, 150,50, floor, ceiling, false, true, false,false,false,false);
+			
+			//trashbags
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(222963432,  rotation1,rotation2,scale1,scale2,0,10, 0f,1250, 30, floor, ceiling, false, false, false,false,false,false);
+			
+			//algae
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(2f,2f,2f);
+			scale2 = new Vector3(3f,3f,3f);
+			
+			MapIO.insertPrefabCliffs(358311630,  rotation1,rotation2,scale1,scale2,10,35, -.75f,100, 30, floor, ceiling, false, false, false,false,false,false);
+			MapIO.insertPrefabCliffs(1905772401,  rotation1,rotation2,scale1,scale2,10,35, -.75f,100, 30, floor, ceiling, false, false, false,false,false,false);
+			
+			//road cones
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(2f,2f,2f);
+			scale2 = new Vector3(2.5f,2.5f,2.5f);
+			
+			MapIO.insertPrefabCliffs(2371334959,  rotation1,rotation2,scale1,scale2,0,10, -.25f, 1000, 10, floor, ceiling, false, false, false,false,false,false);
+			
+			//cars
+			rotation1 = new Vector3(80f,0f,0f);
+			rotation2 = new Vector3(100f,359f,0f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(579044360,  rotation1,rotation2,scale1,scale2,10,35, 1f, 100, 20, floor, ceiling, false, false, false,false,false,false);
+			
+			//tires
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(766753890,  rotation1,rotation2,scale1,scale2,0,10, 0f, 600,30, floor, ceiling, false, false, false,false,false,false);
+			
+			//tires
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(3007326564,  rotation1,rotation2,scale1,scale2,0,10, 0f, 600,30, floor, ceiling, false, false, false,false,false,false);
+			
+			//tires
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(1f,1f,1f);
+			scale2 = new Vector3(1f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(477532245,  rotation1,rotation2,scale1,scale2,0,10, 0f, 300, 30, floor, ceiling, false, false, false,false,false,false);
+		}
+		
+		void ChinaCliffs()
+		{
+
+			float floor = .5f;
+			float ceiling = 1f;
+			
+			//cliff rocks
+			
+			Vector3 rotation1 = new Vector3(0f,0f,89f);
+			Vector3 rotation2 = new Vector3(3f,355f,91f);
+			Vector3 scale1 = new Vector3(3f,2f,2f);
+			Vector3 scale2 = new Vector3(3.5f,2.5f,2.5f);
+			
+			
+			
+			MapIO.insertPrefabCliffs(181322589,  rotation1,rotation2,scale1,scale2,40,90, -30f, 69,40, floor, ceiling, true, false, true,false,false,false);
+			
+			//cliff bushes
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(3f,2f,3f);
+			scale2 = new Vector3(4f,2.5f,4f);
+			
+			
+			
+			MapIO.insertPrefabCliffs(3809416830,  rotation1,rotation2,scale1,scale2,50,90, 0f, 70, 25, floor, ceiling, false,false, true,false,false,false);
+			
+			//cliff bushes 2
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(3f,2f,3f);
+			scale2 = new Vector3(4f,2.5f,4f);
+			
+			
+			
+			MapIO.insertPrefabCliffs(382842717,  rotation1,rotation2,scale1,scale2,50,90, 0f, 70, 25, floor, ceiling, false, false, true,false,false,false);
+			
+			
+		}
+		
+		
+		void GreenlandCliffs()
+		{
+			float floor = .563f;
+			float ceiling = .572f;
+			
+			Vector3 rotation1 = new Vector3(0f,0f,0f);
+			Vector3 rotation2 = new Vector3(0f,355f,0f);
+			Vector3 scale1 = new Vector3(4.5f,8.5f,4.5f);
+			Vector3 scale2 = new Vector3(5.5f,8.5f,5.5f);
+			
+			MapIO.insertPrefabCliffs(4093686352,  rotation1,rotation2,scale1,scale2,0,4, -2f, 500, 10, floor, ceiling, false, false, false,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(3.5f,8.5f,3.5f);
+			scale2 = new Vector3(4.5f,8.5f,4.5f);
+			
+			MapIO.insertPrefabCliffs(3925197548,  rotation1,rotation2,scale1,scale2,0,4, -2f, 500, 10, floor, ceiling, false, false, false,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(0f,359f,0f);
+			scale1 = new Vector3(2.5f,8.5f,2.5f);
+			scale2 = new Vector3(3.5f,8.5f,3.5f);
+			
+			MapIO.insertPrefabCliffs(66304440,  rotation1,rotation2,scale1,scale2,0,4, -2f, 500, 10, floor, ceiling, false, false, false,false,false,false);
+		}
+		
+		
+		void PwyllCliffs()
+		{
+			
+			//1932032762 large smallrock
+			//2047045499 medium smallrock
+			//981545256 small smallrock
+			
+			//4054464859 ?
+			
+			//1894186663 ?
+			
+			//3241890436 ?
+			
+			//1229245979 ?
+			
+			//181322589 main
+			//insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+			
+			float floor = .51f;
+			float ceiling = .58f;
+			
+			Vector3 rotation1 = new Vector3(0f,0f,0f);
+			Vector3 rotation2 = new Vector3(3f,355f,0f);
+			Vector3 scale1 = new Vector3(.75f,1f,1f);
+			Vector3 scale2 = new Vector3(.75f,1f,1f);
+			
+			MapIO.insertPrefabCliffs(1895037412,  rotation1,rotation2,scale1,scale2,40,90, -14.8f, 69,7, .498f, 1f, false, true, false,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.75f,.75f,.75f);
+			scale2 = new Vector3(.75f,1f,.75f);
+			
+			MapIO.insertPrefabCliffs(1932032762,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 20, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(2047045499,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 20, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(981545256,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 20, floor, ceiling, false, true, true,false,false,false);
+		}
+		
+		
+		void EgyptCliffs()
+		{
+			
+			//1932032762 large smallrock
+			//2047045499 medium smallrock
+			//981545256 small smallrock
+			
+			//4054464859 ?
+			
+			//1894186663 ?
+			
+			//3241890436 ?
+			
+			//1229245979 ?
+			
+			//181322589 main
+			//insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+			
+			float floor = .51f;
+			float ceiling = .700f;
+			
+			Vector3 rotation1 = new Vector3(0f,0f,89f);
+			Vector3 rotation2 = new Vector3(3f,355f,91f);
+			Vector3 scale1 = new Vector3(1.8f,1.8f,1.8f);
+			Vector3 scale2 = new Vector3(2f,2f,2f);
+			
+
+			
+			MapIO.insertPrefabCliffs(181322589,  rotation1,rotation2,scale1,scale2,40,90, -14.8f, 69,4, floor, ceiling+.3f, false, true, true,false,false,false);
+			
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.75f,.75f,.75f);
+			scale2 = new Vector3(.75f,1f,.75f);
+			
+			MapIO.insertPrefabCliffs(1932032762,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 25, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(2047045499,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 25, floor, ceiling, false, true, true,false,false,false);
+			
+			rotation1 = new Vector3(0f,0f,0f);
+			rotation2 = new Vector3(359f,359f,359f);
+			scale1 = new Vector3(.3f,.3f,.3f);
+			scale2 = new Vector3(.5f,.6f,.5f);
+			
+			MapIO.insertPrefabCliffs(981545256,  rotation1,rotation2,scale1,scale2,0,25, 0f, 150, 25, floor, ceiling, false, true, true,false,false,false);
 		}
 		
 		void WaterworldCliffs()

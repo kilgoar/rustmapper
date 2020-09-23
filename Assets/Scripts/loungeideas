@@ -1,0 +1,53 @@
+
+a (rough) idea for more competitive rust arena matches
+
+best of 9 rounds. spawns are swapped each round
+
+kits are purchasable from vending machines at spawn during 30 second buy period.
+each round begins automatically after 15 seconds. [no /ready, etc]
+
+
+	weaponry						armor			meds		walls	cost
+----------------------------------------------------------------------------
+0. crossbow, pipe, spear			wood armor		6 corn				default
+
+1. revo, db, cleaver, beancan		buckethelmet 	6 corn	 		    200 
+2. tommy, semi pistol, sword		hazzy 			4 meds				400 
+3. sar, custom, ck					hazzy			4 meds		1		500 
+4. m39, python, ck, f1 				roadsign 		6 meds		2		600 
+5. mp5, m9, ck 						roadsign 		6 meds		3		700 
+6. ak, bolt, jackhammer 			fullset 		6 meds		3		800 
+7. m249, L9, jackhammer, smokes		fullset 		8 meds		3		1000
+
+
+
+each player on winning team gains 300 scrap per round won
+each player on losing team gains 200 scrap per round lost
+suicide is a 100 scrap penalty.
+
+a round is won by downing or full killing an entire enemy team.
+round ends immediately when all players on one team are downed or full killed.
+
+kits are lost on death and all gear and items are unlootable and non-transferable. ammo, armor, etc regenerate with each round survived.
+all of a player's scrap can be taken (once per round) by looting their dead or downed body.
+
+
+[optional rule for objective-based gameplay, speed things along a bit]
+at the beginning of each round an airdrop spawns at a random location. it takes 2 minutes to drop. first team to loot it wins.
+each player on the team who loots objective gains an extra 200 scrap in addition to the 200 for winning the round.
+
+
+[another optional rule]
+scrap bonuses awarded for each full kill, based on the weapon used:
+spear - 100
+cleaver - 75
+combat knife - 60
+jackhammer - 50
+crossbow, pipe, revo - 60
+double barrel - 50
+tommy, semi pistol, sar, custom, python - 40
+m39, m9, mp5 - 30
+ak, bolt, l9, m249 - 25
+
+
+ideally these rules or something like them will create a more interesting and competitive match which encourages gameplay that goes beyond bare tactics and into competitive strategies.

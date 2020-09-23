@@ -1340,6 +1340,94 @@ public static class MapIO
 	
 	}	
 	
+	public static void perlinChakotay(int l, int p, float s)
+	{
+	
+			
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+			float[,] perlinSum = baseMap;
+			
+			
+			for (int i = 0; i < baseMap.GetLength(0); i++)
+			{
+					
+				for (int j = 0; j < baseMap.GetLength(0); j++)
+				{
+					perlinSum[i,j] = (0);
+				}
+			}
+			
+			
+			float r = 0;
+			float r1 = 0;
+			float amplitude = .5f;
+			float height  = .15f;
+			
+			
+			for (int u = 1; u <= l; u++)
+			{
+				
+				r = UnityEngine.Random.Range(0,10000)/100f;
+				//r1 =  UnityEngine.Random.Range(0,10000)/100f;
+				
+				
+				
+				
+				
+				for (int i = 0; i < baseMap.GetLength(0); i++)
+				{
+		
+					for (int j = 0; j < baseMap.GetLength(0); j++)
+					{
+						
+						perlinSum[i,j] += Mathf.PerlinNoise(i*1f/s+r,j*1f/s+r)*height + amplitude;
+					}
+					EditorUtility.DisplayProgressBar("Generating layer " + u.ToString(), "", (i*1f / baseMap.GetLength(0)*1f));
+				}
+												
+				s = s - p;
+				amplitude=0;
+				height *= .5f;
+				
+			}
+			EditorUtility.ClearProgressBar();
+			
+			
+	
+			land.terrainData.SetHeights(0, 0, perlinSum);
+			//changeLandLayer();
+	
+	}	
+	
+	
+	public static void terrainFold()
+	{
+	
+			
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+			float[,] foldMap = baseMap;
+			
+			
+			for (int i = 0; i < baseMap.GetLength(0); i++)
+			{
+					
+				for (int j = 0; j < baseMap.GetLength(0); j++)
+				{
+					foldMap[i,j] = Mathf.Cos(4f*Mathf.PI * baseMap[i,j] + Mathf.PI)+1.3f;
+					//foldMap[i,j] = Mathf.Abs(baseMap[i,j]-.5f)+.3f;
+				}
+			}
+			
+			
+			
+	
+			land.terrainData.SetHeights(0, 0, foldMap);
+			//changeLandLayer();
+	
+	}	
+	
 	public static void diamondSquareNoise(int roughness, int height, int weight)
 	{
 			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
@@ -1436,7 +1524,7 @@ public static class MapIO
 	
 	}	
 	
-	public static void bluffTerracing(bool flatten, bool perlinBanks, bool circular, float terWeight, int zStart, int gBot, int gTop, int gates, int descaler)
+	public static void bluffTerracing(bool flatten, bool perlinBanks, bool circular, float terWeight, int zStart, int gBot, int gTop, int gates, int descaler, int density)
 	{
 			
 			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
@@ -1471,7 +1559,7 @@ public static class MapIO
 			
 				float r = 0;
 				float r1 = 0;
-				int s = 20;
+				int s = density;
 				
 
 				
@@ -2146,7 +2234,7 @@ public static class MapIO
         float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
 		float ratio = terrains.size.x / (baseMap.GetLength(0));
 		
-		int dim=baseMap.GetLength(0)/2;
+		int dim=baseMap.GetLength(0)-4;
 		
 		float x1 = x/2f;
 		float y1 = y/2f;
@@ -2190,6 +2278,9 @@ public static class MapIO
 		dim = dim + 25;
 		if(dim == 25)
 		{	dim = 0;   }
+	
+		//here comes the finale
+		dim = 2040;
 		
 		for (int i = 0; i < dim; i++)
 		{
@@ -2246,7 +2337,6 @@ public static class MapIO
 			terrains.prefabData[i].position.x = terrains.prefabData[i].position.x+y1*2f;
 			terrains.prefabData[i].position.z = terrains.prefabData[i].position.z+x1*2f;
 			terrains.prefabData[i].position.y = terrains.prefabData[i].position.y + zOffset*1000f;
-			
 			
 			GameObject newObj = SpawnPrefab(defaultObj, terrains.prefabData[i], prefabsParent);
             newObj.GetComponent<PrefabDataHolder>().prefabData = terrains.prefabData[i];
@@ -2859,6 +2949,44 @@ public static class MapIO
 		
 	}
 	
+	public static void stripMonumentPrefabs()
+	{
+		//removes prefabs that are not on the Arid biome
+		Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+		float[,,] pBiome = LandData.biomeArray;
+		int size = pBiome.GetLength(0);
+		int x1,y1;
+		int count = 0;
+		float ratio = land.terrainData.size.x / size;
+		
+		
+		GameObject prefabs = GameObject.Find("Objects");
+		var prefab = prefabs.GetComponentsInChildren<PrefabDataHolder>(true);
+		
+		for (int k = 0; k < prefab.Length; k++)
+		{
+					x1 = (int)((prefab[k].gameObject.transform.position.z/ratio));
+					y1 = (int)((prefab[k].gameObject.transform.position.x/ratio));
+	
+					if (x1 > 0 && x1 < size-4 && y1 > 0 && y1 < size-4)
+					{
+							if (pBiome[x1,y1,0] > .99f)
+							{
+								//don't do a thing
+							}
+							else
+							{
+								GameObject.DestroyImmediate(prefab[k].gameObject);
+								prefab[k] = null;
+								count ++;
+
+							}
+					}
+		}
+		Debug.LogError(count + " prefabs removed");
+		
+	}
+	
 	public static void stripPrefabsUnderMonument(WorldSerialization blob, int x, int y)
 	{
 		
@@ -2887,12 +3015,12 @@ public static class MapIO
 		float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
 		
 		
-		float ratio = terrains.size.x / (baseMap.GetLength(0));
+		float ratio = land.terrainData.size.x / (baseMap.GetLength(0));
 		
 		int dim=baseMap.GetLength(0) / 2;
 		
-		x=(int)(x/2f);
-		y=(int)(y/2f);
+		//x=(int)(x);
+		//y=(int)(y);
 		
 
 
@@ -2926,7 +3054,8 @@ public static class MapIO
 					}
         }
 		
-		
+		if (dim > baseMap.GetLength(0))
+		{dim = baseMap.GetLength(0);}
 		//GameObject mapPrefabs = GameObject.Find("Objects");
 
          
@@ -2942,43 +3071,115 @@ public static class MapIO
 
 		int x1;
 		int y1;
+		
+		
 		float y5;
 		int count = 0;
 		float diff;
 		
 		
+		int size1 = (int)land.terrainData.size.x;
+		
+		
+		/*
+		for (int i = 0; i < dim; i++)
+		{
+			EditorUtility.DisplayProgressBar("Deleting", "Deleting Prefabs", (i*1f/dim));
+			for (int j = 0; j < dim; j++)
+			{
+				if (pBiome[i, j, 0] > 0.8f)
+						{	
+							
+							for (int k = 0; k < prefab.Length; k++)
+							{
+								x1 = (j+x)*ratio - (size/2f);
+								y1 = (i+y)*ratio - (size/2f);
+								
+								if (prefab[k] != null)
+								{
+									x2 = prefab[k].gameObject.transform.position.z;
+									y2 = prefab[k].gameObject.transform.position.x;
+								}
+								else
+								{
+									x2 = 0f;
+									y2 = 0f;
+								}
+								
+								if(x2 > x1-1f && x2 < x1+1f && y2 > y1-1f && y2 < y1+1f)
+								{
+								
+							
+									GameObject.DestroyImmediate(prefab[k].gameObject);
+									prefab[k] = null;
+									count ++;
+								}
+								
+							}
+						}
+
+					
+			}
+		}
+		*/
+		
+		/*
+		float ratio = land.terrainData.size.x / (baseMap.GetLength(0));
+		j *ratio-(size/2f)
+		*/
+		
 		for (int k = 0; k < prefab.Length; k++)
 		{
 
-					x1 = (int)(prefab[k].gameObject.transform.position.z/2f-x*1f);
-					y1 = (int)(prefab[k].gameObject.transform.position.x/2f-y*1f);
+					x1 = (int)((prefab[k].gameObject.transform.position.z/ratio)-x*1f/2f);
+					y1 = (int)((prefab[k].gameObject.transform.position.x/ratio)-y*1f/2f);
 
 					
-					if (x1 > 0 && x1 < size && y1 > 0 && y1 < size)
+					if (x1 > 0 && x1 < size-4 && y1 > 0 && y1 < size-4)
 					{
 
 						diff = pasteMap[x1,y1] - baseMap[x1,y1];
-						
-						if (pBiome[x1,y1,0] <= .999f && pBiome[x1,y1,0] > .0001f)
+						if (y1 <= pBiome.GetLength(0)-4 && x1 <= pBiome.GetLength(0)-4)
 						{
 							
-							prefab[k].prefabData.position = new Vector3(prefab[k].prefabData.position.x ,prefab[k].prefabData.position.y - diff, prefab[k].prefabData.position.z);
+							if (pBiome[x1,y1,0] <= .8f && pBiome[x1,y1,0] > .0001f)
+							{
+								
+								prefab[k].prefabData.position = new Vector3(prefab[k].prefabData.position.x ,prefab[k].prefabData.position.y - diff, prefab[k].prefabData.position.z);
+								
+							}
 							
+							else if (pBiome[x1, y1, 0] > 0.8f)
+							{	
+								GameObject.DestroyImmediate(prefab[k].gameObject);
+								prefab[k] = null;
+								count ++;
+							}
 						}
-						
-						else if (pBiome[x1, y1, 0] > 0.9999f)
-						{	
-							GameObject.DestroyImmediate(prefab[k].gameObject);
-							prefab[k] = null;
-							count ++;
-						}
-						
 					}
 
 		}
+		
+		
+		
+		Debug.LogError(count + " prefabs removed");
+	}
+	
+	public static void deleteAllPrefabs()
+	{
+		int count = 0;
+		
+		GameObject prefabs = GameObject.Find("Objects");
+		var prefab = prefabs.GetComponentsInChildren<PrefabDataHolder>(true);
+		
+		for (int k = 0; k < prefab.Length; k++)
+		{
 
-		
-		
+				
+							GameObject.DestroyImmediate(prefab[k].gameObject);
+							prefab[k] = null;
+							count ++;
+		}
 		Debug.LogError(count + " prefabs removed");
 	}
 	
@@ -3371,6 +3572,7 @@ public static class MapIO
 				}
             }
         }
+		EditorUtility.ClearProgressBar();
 		LandData.SetData(newGround, "ground", 0);
 		LandData.SetLayer("ground", 0);
 	}
@@ -3558,6 +3760,271 @@ public static class MapIO
 	
 			land.terrainData.SetHeights(0, 0, baseMap);
 	}
+	
+	public static Vector2 minMaxHeight()
+	{
+			Vector2 minMax = new Vector2(0,0);
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+
+			float max = baseMap[0,0];
+			float min = baseMap[0,0];
+			
+			for (int i = 0; i < baseMap.GetLength(0); i++)
+			{
+					
+				for (int j = 0; j < baseMap.GetLength(0); j++)
+				{
+					if (baseMap[i,j] < min)
+					{
+						min = baseMap[i,j];
+					}
+					if (baseMap[i,j] > max)
+					{
+						max = baseMap[i,j];
+					}
+					
+				}
+			}
+			minMax = new Vector2(min,max);
+			return(minMax);
+			
+	}
+	
+	public static void giantCave(int size, int vert)
+	{
+		
+			int res = 500;
+			Vector3 position, rotation,scale = new Vector3(0,0,0);
+			int count=0;
+			float sphube = 0f;
+			float ratioi,ratioj,ratiok;
+			
+			
+		for (int i = 0; i < res/2; i++)  //z
+		{
+			EditorUtility.DisplayProgressBar("Calculating", "making giant cave",(i*1f/res));
+			for (int j = -1*res-10; j < res+10; j++)
+			{
+				for (int k = -1*res-10; k <res+10; k++)
+				{
+						ratioi = 1f*i/res;
+						ratioj = 1f*j/res;
+						ratiok = 1f*k/res;
+						
+					sphube = Mathf.Pow((ratioi+.7f),4)+Mathf.Pow(ratioj,4)+Mathf.Pow(ratiok,4);
+					if((sphube > .997f) && (sphube < 1.001f))
+					{
+						if(UnityEngine.Random.Range(0,vert)==1)
+						{
+							
+							position = new Vector3(ratioj*size, ratioi*size, ratiok*size);
+							rotation = new Vector3(UnityEngine.Random.Range(0,360),UnityEngine.Random.Range(0,360),UnityEngine.Random.Range(0,360));
+							scale = new Vector3(UnityEngine.Random.Range(4,5),UnityEngine.Random.Range(4,5),UnityEngine.Random.Range(4,5));
+							createPrefab("Decor", 1390860868, position, rotation, scale);
+							count++;
+						}
+					}
+				}
+			}
+		}
+		EditorUtility.ClearProgressBar();
+		Debug.LogError(count);
+	}
+
+	public static void starryNight(int size, int vert)
+	{
+		
+			int res = 250;
+			Vector3 position, rotation,scale, scale2 = new Vector3(0,0,0);
+			int count=0;
+			float sphube = 0f;
+			float ratioi,ratioj,ratiok;
+			int scaleLock = 0;
+			int roll = 0;
+			
+		for (int i = 3; i < res/2+50; i++)  //z
+		{
+			EditorUtility.DisplayProgressBar("Calculating", "making giant cave",(i*1f/res));
+			for (int j = -1*res-10; j < res+10; j++)
+			{
+				for (int k = -1*res-10; k <res+10; k++)
+				{
+						ratioi = 1f*i/res;
+						ratioj = 1f*j/res;
+						ratiok = 1f*k/res;
+						
+					sphube = Mathf.Pow((ratioi+.5f),4)+Mathf.Pow(ratioj,4)+Mathf.Pow(ratiok,4);
+					if((sphube > .991f) && (sphube < 1.005f))
+					{
+						position = new Vector3(ratioj*size, ratioi*size, ratiok*size);
+						rotation = new Vector3(UnityEngine.Random.Range(0,360),UnityEngine.Random.Range(0,360),UnityEngine.Random.Range(0,360));
+						scaleLock = UnityEngine.Random.Range(0,5);
+						roll = UnityEngine.Random.Range(0,vert);
+						scale = new Vector3(.5f*scaleLock,1f*scaleLock,1f*scaleLock);
+						scale2 = new Vector3(scaleLock*2f+10f,scaleLock*2f+10f,scaleLock*2f+10f);
+						if(roll==1)
+						{
+							createPrefab("Decor", 2874311920, position, rotation, scale);
+							count++;
+						}
+						else if (roll == 2)
+						{
+							createPrefab("Decor", 4153457039, position, rotation, scale2);
+							count++;
+						}
+					}
+				}
+			}
+		}
+		EditorUtility.ClearProgressBar();
+		Debug.LogError(count);
+	}
+
+
+	public static void oceans(int radius, int gradient, float seafloor, int xOffset, int yOffset, bool perlin, int s)
+	{
+		
+		//should fix with proper inputs
+		
+			
+				
+				float	r = UnityEngine.Random.Range(0,10000)/100f;
+				float	r1 =  UnityEngine.Random.Range(0,10000)/100f;
+			
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+			
+			float[,] perlinShape = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			
+			float[,] puckeredMap = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			int distance = 0;
+			
+			Vector2 focusA = new Vector2(baseMap.GetLength(0)/2f+xOffset,baseMap.GetLength(0)/2f+yOffset);
+			Vector2 focusB = new Vector2(baseMap.GetLength(0)/2f-xOffset,baseMap.GetLength(0)/2f-yOffset);
+			
+			
+			Vector2 center = new Vector2(baseMap.GetLength(0)/2f,baseMap.GetLength(0)/2f);
+			Vector2 scanCord = new Vector2(0f,0f);
+			
+			int res = baseMap.GetLength(0);
+			
+				for (int i = 0; i < res; i++)
+				{
+					EditorUtility.DisplayProgressBar("Puckering", "making island",(i*1f/res));
+					for (int j = 0; j < res; j++)
+					{
+						scanCord.x = i; scanCord.y = j;
+						//circular
+						//distance = (int)Vector2.Distance(scanCord,center);
+						distance = (int)(Mathf.Pow((Mathf.Pow((scanCord.x - focusA.x),4f) + Mathf.Pow((scanCord.y - focusA.y),4f)),1f/4f));
+						
+						//distance = (int)Mathf.Sqrt(Vector2.Distance(scanCord,focusA)) + (int)Mathf.Sqrt(Vector2.Distance(scanCord,focusB));
+						
+						//if distance from center less than radius, value is 1
+						if (distance < radius*2f)
+						{
+							puckeredMap[i,j] = 1f;
+						}
+						//otherwise the value should proceed to 0
+						else if (distance>=radius *2f && distance <=radius*2f + gradient)
+						{
+							perlinShape[i,j] = Mathf.PerlinNoise(i*1f/s+r, j*1f/s+r1)*2f;
+							if (perlinShape[i,j] > 1f)
+								perlinShape[i,j] = 1f;
+							puckeredMap[i,j] = .5f+Mathf.Cos(((distance-radius*2f)/gradient)*Mathf.PI)*.5f - (Mathf.Sin(((distance-radius*2f)/gradient)*Mathf.PI)*perlinShape[i,j]*.5f);
+							
+							if (puckeredMap[i,j] < 0)
+								puckeredMap[i,j] = 0;
+						}
+						else
+						{
+							puckeredMap[i,j] = 0f;
+						}
+						
+						puckeredMap[i,j] = Mathf.Lerp(seafloor, baseMap[i,j], puckeredMap[i,j]);
+					}
+				}
+												
+
+						
+			
+			EditorUtility.ClearProgressBar();
+			land.terrainData.SetHeights(0, 0, puckeredMap);
+	}
+	
+	
+	public static void circleOceans(int radius, int gradient, float seafloor, int xOffset, int yOffset, bool perlin, int s)
+	{
+		
+		//should fix with proper inputs
+		
+			
+				
+				float	r = UnityEngine.Random.Range(0,10000)/100f;
+				float	r1 =  UnityEngine.Random.Range(0,10000)/100f;
+			
+			Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+			float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+			
+			float[,] perlinShape = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			
+			float[,] puckeredMap = new float[baseMap.GetLength(0),baseMap.GetLength(0)];
+			int distance = 0;
+			
+			Vector2 focusA = new Vector2(baseMap.GetLength(0)/2f+xOffset,baseMap.GetLength(0)/2f+yOffset);
+			Vector2 focusB = new Vector2(baseMap.GetLength(0)/2f-xOffset,baseMap.GetLength(0)/2f-yOffset);
+			
+			
+			Vector2 center = new Vector2(baseMap.GetLength(0)/2f,baseMap.GetLength(0)/2f);
+			Vector2 scanCord = new Vector2(0f,0f);
+			
+			int res = baseMap.GetLength(0);
+			
+				for (int i = 0; i < res; i++)
+				{
+					EditorUtility.DisplayProgressBar("Puckering", "making island",(i*1f/res));
+					for (int j = 0; j < res; j++)
+					{
+						scanCord.x = i; scanCord.y = j;
+						//circular
+						//distance = (int)Vector2.Distance(scanCord,center);
+						distance = (int)Vector2.Distance(scanCord,focusA) + (int)Vector2.Distance(scanCord,focusB);
+						
+						//distance = (int)Mathf.Sqrt(Vector2.Distance(scanCord,focusA)) + (int)Mathf.Sqrt(Vector2.Distance(scanCord,focusB));
+						
+						//if distance from center less than radius, value is 1
+						if (distance < radius*2f)
+						{
+							puckeredMap[i,j] = 1f;
+						}
+						//otherwise the value should proceed to 0
+						else if (distance>=radius *2f && distance <=radius*2f + gradient)
+						{
+							perlinShape[i,j] = Mathf.PerlinNoise(i*1f/s+r, j*1f/s+r1)*2f;
+							if (perlinShape[i,j] > 1f)
+								perlinShape[i,j] = 1f;
+							puckeredMap[i,j] = .5f+Mathf.Cos(((distance-radius*2f)/gradient)*Mathf.PI)*.5f - (Mathf.Sin(((distance-radius*2f)/gradient)*Mathf.PI)*perlinShape[i,j]*.5f);
+							
+							if (puckeredMap[i,j] < 0)
+								puckeredMap[i,j] = 0;
+						}
+						else
+						{
+							puckeredMap[i,j] = 0f;
+						}
+						
+						puckeredMap[i,j] = Mathf.Lerp(seafloor, baseMap[i,j], puckeredMap[i,j]);
+					}
+				}
+												
+
+						
+			
+			EditorUtility.ClearProgressBar();
+			land.terrainData.SetHeights(0, 0, puckeredMap);
+	}
+	
 	
 	public static void pucker(int radius, int gradient, float seafloor, int xOffset, int yOffset, bool perlin, int s)
 	{
@@ -3870,8 +4337,8 @@ public static class MapIO
 		LandData.SetLayer(landLayer, 0);			
 		
 	}
-	
-	public static void insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping)
+
+	public static void insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, int thinnitude, float floor, float ceiling, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
 	{
 		
 				
@@ -3894,6 +4361,7 @@ public static class MapIO
 		Vector3 position;
 		Vector3 rRotate;
 		Vector3 rScale;
+		Vector3 normal = new Vector3(0,0,0);
 		
 		float[] heights = new float[9];
 		int p = 0;
@@ -3909,6 +4377,10 @@ public static class MapIO
 		float newPixel = 0f;
 		//int[] randomizer = new int[12];
 		float randomizer = 0f;
+		
+		float xNormalizer = 0f;
+		float yNormalizer = 0f;
+		float zNormalizer = 0f;
 		
 		float quotient = 0f;		
 		
@@ -4052,7 +4524,7 @@ public static class MapIO
 				
 						
 				
-				if(baseMap[i,j] > floor/1000f && avoidMap[i,j,0] < avoider && cliffMap[i,j]>=.5f && slope > s1 && slope < s2)
+				if(baseMap[i,j] > floor && baseMap[i,j] < ceiling && avoidMap[i,j,0] < avoider && cliffMap[i,j]>=.5f && slope > s1 && slope < s2)
 				{
 					//for debugging
 							//monumentMap[i,j,0] = 1f;
@@ -4099,18 +4571,42 @@ public static class MapIO
 									position = new Vector3(j *ratio-(size/2f)+yOff*ratio, height * sizeZ - (sizeZ*.5f) + zOffset,i *ratio-(size/2f)+xOff*ratio);
 									
 									//rotation gets geology and randomization
-									rRotate = new Vector3(UnityEngine.Random.Range(rotationRange1.x, rotationRange2.x) + geology + flipX, UnityEngine.Random.Range(rotationRange1.y, rotationRange2.y), UnityEngine.Random.Range(rotationRange1.z,rotationRange2.z) + flipZ);
+									//normalization
+									
+									normal = land.terrainData.GetInterpolatedNormal(1f*j/res, 1f*i/res);
+									
+									if(normalizeX)
+									{
+									xNormalizer = normal.x*90f;
+									}
+									
+									if(normalizeY)
+									{
+									yNormalizer = normal.y*90f;
+									}
+									
+									if(normalizeZ)
+									{
+									zNormalizer = normal.z*90f;
+									}
+									
+									
+									rRotate = new Vector3(xNormalizer + UnityEngine.Random.Range(rotationRange1.x, rotationRange2.x) + geology + flipX, yNormalizer + UnityEngine.Random.Range(rotationRange1.y, rotationRange2.y), zNormalizer + UnityEngine.Random.Range(rotationRange1.z,rotationRange2.z) + flipZ);
 									rScale = new Vector3(UnityEngine.Random.Range(scaleRange1.x, scaleRange2.x), UnityEngine.Random.Range(scaleRange1.y, scaleRange2.y), UnityEngine.Random.Range(scaleRange1.z,scaleRange2.z));
 									
 									//public static void createPrefab(string category, uint id, Vector3 position, Vector3 rotation, Vector3 scale)
+									if(UnityEngine.Random.Range(0,thinnitude) == 2)
+									{
 									createPrefab("Decor", featPrefabID, position, rRotate, rScale);
+									count++;
+									}
 									/*
 									newObj = reeSpawnPrefab(position, rRotate, defaultObj, terrains.prefabData[k], prefabsParent);
 									newObj.GetComponent<PrefabDataHolder>().prefabData.id = terrains.prefabData[k].id;
 									newObj.GetComponent<PrefabDataHolder>().prefabData.category = terrains.prefabData[k].category;
 									newObj.GetComponent<PrefabDataHolder>().prefabData.scale = terrains.prefabData[k].scale;
 									*/
-									count++;
+									
 									
 				}
 				
@@ -4119,7 +4615,287 @@ public static class MapIO
 			
         }
 		EditorUtility.ClearProgressBar();
-		EditorUtility.DisplayDialog("Complete", count + " Geology Features Placed.", "Ok", "Great!");
+		Debug.LogError("Geology Complete: " + count + " Features Placed.");
+	}
+	
+	public static void insertPrefabCliffs(uint featPrefabID, Vector3 rotationRange1, Vector3 rotationRange2, Vector3 scaleRange1, Vector3 scaleRange2, int s1, int s2, float zOffset, int density, float floor, bool avoid, bool tilting, bool flipping, bool normalizeX, bool normalizeY, bool normalizeZ)
+	{
+		
+				
+		
+		
+		
+		
+		Terrain land = GameObject.FindGameObjectWithTag("Land").GetComponent<Terrain>();
+		float[,] baseMap = land.terrainData.GetHeights(0, 0, land.terrainData.heightmapWidth, land.terrainData.heightmapHeight);
+		float[,,] avoidMap = LandData.topologyArray[TerrainTopology.TypeToIndex((int)targetTopologyLayer)];
+		
+		Transform prefabsParent = GameObject.FindGameObjectWithTag("Prefabs").transform;
+		GameObject defaultObj = Resources.Load<GameObject>("Prefabs/DefaultPrefab");
+        
+		int count = 0;
+		int res = baseMap.GetLength(0);
+		int size = (int)land.terrainData.size.x;
+		int sizeZ = (int)land.terrainData.size.y;
+		
+		Vector3 position;
+		Vector3 rRotate;
+		Vector3 rScale;
+		Vector3 normal = new Vector3(0,0,0);
+		
+		float[] heights = new float[9];
+		int p = 0;
+		float geology = new float();
+		int flipX=0;
+		int flipZ=0;
+		float slope=0;
+		float avoider = 1f;
+		float[,] cliffMap = new float[res,res];
+		
+		float slopeDiff = 0f;
+		float oldPixel = 0f;
+		float newPixel = 0f;
+		//int[] randomizer = new int[12];
+		float randomizer = 0f;
+		
+		float xNormalizer = 0f;
+		float yNormalizer = 0f;
+		float zNormalizer = 0f;
+		
+		float quotient = 0f;		
+		
+		float height=0f;
+		float tempHeight=0f;
+		int xOff=0;
+		int yOff=0;
+		
+		float ratio = land.terrainData.size.x / (baseMap.GetLength(0));
+		
+		if (avoid)
+		{
+			avoider=.01f;
+		}
+		/*
+		
+		wikidpedia pseudocode:
+		
+		oldpixel  := pixel[x][y]
+      newpixel  := find_closest_palette_color(oldpixel)
+      pixel[x][y]  := newpixel
+      quant_error  := oldpixel - newpixel
+      pixel[x + 1][y    ] := pixel[x + 1][y    ] + quant_error * 7 / 16
+      pixel[x - 1][y + 1] := pixel[x - 1][y + 1] + quant_error * 3 / 16
+      pixel[x    ][y + 1] := pixel[x    ][y + 1] + quant_error * 5 / 16
+      pixel[x + 1][y + 1] := pixel[x + 1][y + 1] + quant_error * 1 / 16
+		*/
+		
+		
+		for (int i = 0; i < res; i++)
+        {
+			EditorUtility.DisplayProgressBar("Generating", "Slope Map",(i*1f/res));
+            for (int j = 0; j < res; j++)
+            {
+				
+				cliffMap[i,j] = (land.terrainData.GetSteepness(1f*j/res, 1f*i/res))/90 * (density / 100f);
+				
+				//cliffMap[i,j] = i*1f/res/2f + j*1f/res/2f;
+				
+			}
+		}
+		EditorUtility.ClearProgressBar();
+		/*
+		quotient=0;
+				//randomizer = 1f;
+				for (int f = 0; f < 12; f++)
+				{
+					randomizer[f] = Random.Range(0, 12);
+					quotient+=randomizer[f];
+					Debug.LogError(randomizer[f]);
+				}
+				Debug.LogError(quotient);
+		*/
+		
+		for (int i = 2; i < res-2; i++)
+        {
+			EditorUtility.DisplayProgressBar("Dithering", "Cliff Map",(i*1f/res));
+            for (int j = 2; j < res-2; j++)
+            {
+				
+				oldPixel = cliffMap[i,j];
+				
+				if (cliffMap[i,j] >= .5f)
+					{
+						newPixel = 1f;
+					}
+				else
+					{
+						newPixel = 0f;
+					}
+					
+				cliffMap[i,j] = newPixel;
+				
+				slopeDiff = (oldPixel-newPixel);
+				
+				/*
+				cliffMap[i+1,j] = cliffMap[i+1,j] + (slopeDiff * 7f/16f);
+				cliffMap[i-1,j-1] = cliffMap[i-1,j-1] + (slopeDiff * 3f/16f);
+				cliffMap[i,j+1] = cliffMap[i,j+1] + (slopeDiff * 5f/16f);
+				cliffMap[i+1,j+1] = cliffMap[i+1,j+1] + (slopeDiff * 1f/16f);
+				
+				//sierra fast
+				*/
+				/*
+				randomizer = Random.Range(.95f,1.1f);
+				
+				cliffMap[i+1,j] = cliffMap[i+1,j] + slopeDiff * (2f/4f*randomizer);
+				cliffMap[i-1,j-1] = cliffMap[i-1,j-1] + slopeDiff * (1f/4f*randomizer/2f);
+				cliffMap[i,j+1] = cliffMap[i,j+1] + slopeDiff * (1f/4f*randomizer/2f);
+				*/
+				
+				//   *xy
+				// yxxxz
+				// zzyyz
+				
+				//  *5
+				// 252
+				
+				// /14
+				
+				randomizer = UnityEngine.Random.Range(0f,1f);
+				quotient = 42f;
+				
+				cliffMap[i+1,j] = cliffMap[i+1,j] + (slopeDiff * 8f * randomizer / quotient);
+				cliffMap[i-1,j+1] = cliffMap[i-1,j+1] + (slopeDiff * 4f * randomizer /quotient);
+				cliffMap[i,j+1] = cliffMap[i,j+1] + (slopeDiff * 8f * randomizer / quotient);
+				cliffMap[i+1,j+1] = cliffMap[i+1,j+1] + (slopeDiff * 4f * randomizer / quotient);
+
+				randomizer = UnityEngine.Random.Range(1f,1.5f);
+				
+				cliffMap[i+2,j] = cliffMap[i+2,j] + (slopeDiff * 4f * randomizer / quotient);
+				cliffMap[i-2,j+1] = cliffMap[i-2,j+1] + (slopeDiff * 2f * randomizer / quotient);
+				cliffMap[i,j+2] = cliffMap[i,j+2] + (slopeDiff * 4f * randomizer / quotient);
+				cliffMap[i+2,j+1] = cliffMap[i+2,j+1] + (slopeDiff * 2f * randomizer / quotient);
+				
+				randomizer = UnityEngine.Random.Range(1f,2f);
+				
+				cliffMap[i+1,j+2] = cliffMap[i+1,j+2] + (slopeDiff * 2f * randomizer / quotient);
+				cliffMap[i-2,j+2] = cliffMap[i-2,j+2] + (slopeDiff * 1f * randomizer /quotient);
+				cliffMap[i-1,j+2] = cliffMap[i-1,j+2] + (slopeDiff * 2f * randomizer / quotient);
+				cliffMap[i+2,j+2] = cliffMap[i+2,j+2] + (slopeDiff * 1f * randomizer / quotient);
+				
+				
+				/*
+				randomizer = Random.Range(0f,2f);
+				cliffMap[i+1,j] = cliffMap[i+1,j] + (slopeDiff * randomizer * 7f/16f);
+				cliffMap[i-1,j-1] = cliffMap[i-1,j-1] + (slopeDiff * randomizer * 3f/16f);
+				cliffMap[i,j+1] = cliffMap[i,j+1] + (slopeDiff * randomizer) * 5f/16f;
+				cliffMap[i+1,j+1] = cliffMap[i+1,j+1] + (slopeDiff * randomizer)* 1f/16f;
+				*/
+				
+			}
+		}
+		EditorUtility.ClearProgressBar();
+		for (int i = 1; i < res-1; i++)
+        {
+			EditorUtility.DisplayProgressBar("Spawning", "Geology features",(i*1f/res));
+            for (int j = 1; j < res-1; j++)
+            {
+				slope = land.terrainData.GetSteepness(1f*j/res, 1f*i/res);
+				
+						
+				
+				if(baseMap[i,j] > floor && avoidMap[i,j,0] < avoider && cliffMap[i,j]>=.5f && slope > s1 && slope < s2)
+				{
+					//for debugging
+							//monumentMap[i,j,0] = 1f;
+							//monumentMap[i,j,1] = 0f;
+							
+									//all nextdoor pixel heights
+									p=0;
+									height = 0f;
+									tempHeight= 0f;
+									for (int n = -1; n < 2; n++)
+									{
+										for (int o = -1; o < 2; o++)
+										{
+											tempHeight = baseMap[i+n, j+o];
+											
+											if (height < tempHeight)
+											{
+												height = tempHeight;
+												xOff = n;
+												yOff = o;
+											}
+											
+											
+											
+										}
+									}
+									
+									
+									GameObject newObj;
+																		
+									//chance of flipping 180 on x or z for 'variety'
+									if(flipping)
+									{
+									flipX = UnityEngine.Random.Range(0,2) * 180;
+									flipZ = UnityEngine.Random.Range(0,2) * 180;
+									}
+									//lean and displace each rock for 'geology'
+									if(tilting)
+									{
+									geology = (Mathf.PerlinNoise(i*1f/80,j*1f/80))*20;
+									}
+									//geolog = 0f;
+									//position is nearest highest pixel + zoffset
+									position = new Vector3(j *ratio-(size/2f)+yOff*ratio, height * sizeZ - (sizeZ*.5f) + zOffset,i *ratio-(size/2f)+xOff*ratio);
+									
+									//rotation gets geology and randomization
+									//normalization
+									
+									normal = land.terrainData.GetInterpolatedNormal(1f*j/res, 1f*i/res);
+									
+									if(normalizeX)
+									{
+									xNormalizer = normal.x*90f;
+									}
+									
+									if(normalizeY)
+									{
+									yNormalizer = normal.y*90f;
+									}
+									
+									if(normalizeZ)
+									{
+									zNormalizer = normal.z*90f;
+									}
+									
+									
+									rRotate = new Vector3(xNormalizer + UnityEngine.Random.Range(rotationRange1.x, rotationRange2.x) + geology + flipX, yNormalizer + UnityEngine.Random.Range(rotationRange1.y, rotationRange2.y), zNormalizer + UnityEngine.Random.Range(rotationRange1.z,rotationRange2.z) + flipZ);
+									rScale = new Vector3(UnityEngine.Random.Range(scaleRange1.x, scaleRange2.x), UnityEngine.Random.Range(scaleRange1.y, scaleRange2.y), UnityEngine.Random.Range(scaleRange1.z,scaleRange2.z));
+									
+									//public static void createPrefab(string category, uint id, Vector3 position, Vector3 rotation, Vector3 scale)
+									if(UnityEngine.Random.Range(0,4) == 2)
+									{
+									createPrefab("Decor", featPrefabID, position, rRotate, rScale);
+									count++;
+									}
+									/*
+									newObj = reeSpawnPrefab(position, rRotate, defaultObj, terrains.prefabData[k], prefabsParent);
+									newObj.GetComponent<PrefabDataHolder>().prefabData.id = terrains.prefabData[k].id;
+									newObj.GetComponent<PrefabDataHolder>().prefabData.category = terrains.prefabData[k].category;
+									newObj.GetComponent<PrefabDataHolder>().prefabData.scale = terrains.prefabData[k].scale;
+									*/
+									
+									
+				}
+				
+				
+            }
+			
+        }
+		EditorUtility.ClearProgressBar();
+		Debug.LogError("Geology Complete: " + count + " Features Placed.");
 	}
 	
 	

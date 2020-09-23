@@ -1,0 +1,96 @@
+Base designs in Rust more often than not provide optimal protection and very little past that. 
+Almost everyone in Rust is building wrong, thinking they are making it hard on raiders but really making it harder on themselves, for negligible gains.
+This has to stop.
+
+Some conventional builds have been rightly criticized by Malonik (1) and Sir Taiga, each suggesting a 'new meta' that isn't fully fleshed out.
+
+Malonik outlines the poor quality of life provided by many of these builds, which is the first place we should start. Your ability to win gunfights and raids depends entirely on the ease with which
+you can spawn, arm yourself, craft items, and regenerate health. We'll get to this in a bit.
+
+Taiga emphasizes the fact that there seems to be a "sweet spot" of raid-resistance where a base is just out of reach of most small groups. For me, this is something like 18 rockets.
+Going past that point drastically increases the base's build cost and upkeep, yet past that point you ultimately gain very little in protection from a dedicated zerg.
+
+Taiga says, "most veteran builders will tell you that multiple small bases are better, as opposed to one large base."
+That math is simple and impossible to dispute. For the investment of time by the group, small to medium-small bases are always more costly to raid than the monster towers.
+So we are going to use another conventional design, the 2x2. As we continue to progress, we are not going to stockpile any resources, but rather invest them in another 2x2 and eventually form a beautiful village.
+
+The 2x2-
+
+EvilWurst, regarded as probably the greatest builder, recently designed a very decent 2x2 which nonetheless has a handful of obvious flaws.
+Firstly, placing and locking a TC is the first step to secure a base. Only a noob would do otherwise.
+
+Secondly, both the U-shaped and the F-shaped variations both make a large sacrifice to quality of life in seeking a very marginal return.
+It is much better, overall, to have an O-shaped base, so fill the interior of your 2x2 with wall frames and eventually garage doors.
+Resist the urge to place half walls or shelving, as this will only make it harder for multiple players to reach the loot. We want this base to be as open as possible, so fill the floor with boxes.
+Another benefit of having boxes to stand on is that the comfort gained from rugs placed on the roof is greatly increased, and eventually your entire core can reach maximum comfort in all areas.
+To me, this design is so obviously better than the rest because in removing a single wall, this base can now comfortably accomodate double the players. No more players blocking benches, tcs, boxes, or furnaces.
+
+
+Also, consider square honeycomb. Conventionally, honeycomb is made of triangle foundations, but this blocks the placement of dropboxes.
+While we won't really use these as dropboxes, they are a quick way to maximize storage later on. Another advantage of square honeycombing is it can make an ideal helipad.
+Always consider how easy it is to defend your base when all the doors are open. Of course multiple one-door airlocks are a must. 
+However, during an online, a clever raider can blow two or even more doors out for the price of one. So be careful how you arrange your airlocks.
+Overall that's quite a bit better of a 2x2, and one that you'll actually want to spend more than a day in.
+
+We have sacrificed a small amount of raid security for what is by all measurements the maximum possible quality of life, the material cost is very low, and the relative raid cost is very high.
+Already we are winning more fights outside of the base, gaining more loot, and having more fun just because of our base. But does this constitute a "new meta" for base building?
+Not really. It's simply a good base at this point. But can we take this to the next level and finally put an end to all those shitty 2013 towers? I think so.
+
+Ultimately, this base is just too easy on its lonesome, and you might find yourself running out of space. What I do, as soon as I've stockpiled too much to store is build another base, as close as possible to the first.
+
+Ice lakes are garbage.
+
+This "new meta" is not just a theory, and to be honest, it's not even new. I've put it to the test by fire for several wipes with mostly great success.
+Here's a few things I've learned.
+
+
+
+1. Malonik [https://www.youtube.com/watch?v=c0DzZ5UVNQk] (2:20)
+2. Sir Taiga [https://www.youtube.com/watch?v=c58Cbu7wIgc&t=518s] (3:50)
+
+
+
+
+"CLAN WIPE"
+
+1. AREA OF OPERATION
+
+-	mining outpost
+-	maximum roads
+-	dense forest nearby
+
+2. Modular 2x2 construction
+These small bases are deathtraps for roamers and a frustration both to online and offline raid.
+Even better, the quality of life for players is much, much higher than any other base.
+
+Every box in base can be easily accessed by multiple players simultaneously.
+When completed, every area has very high comfort. Lights filling entire base come on at night.
+There aren't too many doors between you and the fight, and there is a lot of cover all around the place.
+
+-	interior must be 4 garage doors (no fucking walls!)
+-   multiple one door airlocks
+-   front doors are double doors (with turrets)
+-   place TCs closely as possible to form equilateral triangle between bases
+-   extend overlapping foundations & place walls / roofs
+-	floorbox / dropbox storage
+-	separate, but integrated bases for heli tower, roofcamping, explosive vaults
+-	high walls
+-	shotgun traps instead of gates
+
+3. Keepers
+Dominate the road and the mining outpost and take everyone's stuff. Grind it.
+But there are some things we won't grind.
+
+1. Computer Table - silly OP to counter rig. better to rush than a tier 3
+2. Shotgun Trap
+3. Turret
+4. Solar Panel
+5. Medium battery
+6. Electrical Components:
+	-branch
+	-switch
+	-root combiner
+	-blocker
+	-OR switch
+7. Rugs
+8. Ceiling lights
